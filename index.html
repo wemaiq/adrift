@@ -479,19 +479,29 @@ header.ripple span.figtree-adrift {
   resize();
 
   /* ====== Media autoplay ====== */
-  const DEFAULT_VOL = 0.28;
-  function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
-  function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
+const DEFAULT_VOL = 0.28;
+function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
+function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
 
-  let videoReady=false; boatVideo.addEventListener('canplay', ()=>{ videoReady=true; if(boatVideo.paused) boatVideo.play().catch(()=>{}); }, {once:true});
-  const ensurePlay = ()=>{ boatVideo.play().catch(()=>{}); startAudio(); };
-  addEventListener('pointerdown', ensurePlay, {once:true}); addEventListener('keydown', ensurePlay, {once:true});
-  soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAudio.paused){ bgAudio.play().catch(()=>{}); } });
+let videoReady=false; 
+boatVideo.addEventListener('canplay', ()=>{ 
+  videoReady=true; 
+  if(boatVideo.paused) boatVideo.play().catch(()=>{}); 
+}, {once:true});
 
+// Auto-start video after intro sequence (removed user interaction requirement)
+setTimeout(() => {
+  boatVideo.play().catch(()=>{});
+}, 10500); // Start when main content becomes visible
+
+const ensurePlay = ()=>{ boatVideo.play().catch(()=>{}); startAudio(); };
+addEventListener('pointerdown', ensurePlay, {once:true}); 
+addEventListener('keydown', ensurePlay, {once:true});
+soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAudio.paused){ bgAudio.play().catch(()=>{}); } });
   /* ===== Boats ===== */
   const CROP = {x:0, y:0, w:1, h:1};
-  const BOAT_COUNT=11, BOAT_HEIGHT=140;
+  const BOAT_COUNT = window.innerWidth <= 640 ? 8 : 11, BOAT_HEIGHT=140;
   const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
 
   const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
@@ -550,7 +560,7 @@ header.ripple span.figtree-adrift {
       this.morphT0 = 0;
     }
     update(t, boats){
-      const canMove = !(this.paused || this.morphingIn || this.morphingOut);
+      const canMove = !(this.morphingOut);
       if(canMove){ 
         this.x += SPEED_X + this.vx; 
         if(this.x > W + (this._w||160)) this.reset(false); 
@@ -589,7 +599,7 @@ header.ripple span.figtree-adrift {
       this._w=displayW; this._h=displayH;
 
       let a = this.alpha;
-      if(this.paused) a = 0;
+      if(this.morphingOut) a = 0;
 
       if(a <= 0) return;
 
@@ -624,20 +634,22 @@ header.ripple span.figtree-adrift {
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
       if(isIOS) {
-        // Use offscreen canvas for iOS to fix blend mode issue
-        const offCanvas = document.createElement('canvas');
-        offCanvas.width = displayW;
-        offCanvas.height = displayH;
-        const offCtx = offCanvas.getContext('2d');
-        
-        // Draw video to offscreen canvas first
-        offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-        
-        // Then apply blend mode when drawing canvas-to-canvas
-        ctx.globalCompositeOperation = 'screen';
-        ctx.drawImage(offCanvas, -displayW/2, -displayH/2);
-        ctx.globalCompositeOperation = 'source-over'; // Reset
-      } else {
+  // Use offscreen canvas for iOS to fix blend mode issue with proper DPR scaling
+  const dpr = window.devicePixelRatio || 1;
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = displayW * dpr;
+  offCanvas.height = displayH * dpr;
+  const offCtx = offCanvas.getContext('2d');
+  offCtx.scale(dpr, dpr);
+  
+  // Draw video to offscreen canvas first
+  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+  
+  // Then apply blend mode when drawing canvas-to-canvas
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
+  ctx.globalCompositeOperation = 'source-over'; // Reset
+} else {
         // Original code for non-iOS devices
         const prev = ctx.globalCompositeOperation;
         ctx.globalCompositeOperation = 'screen';
@@ -775,9 +787,9 @@ header.ripple span.figtree-adrift {
     noteClosing = true;
 
     if(noteBoat){
-      noteBoat.morphingOut = true;
-      noteBoat.morphT0 = performance.now();
-    }
+  noteBoat.morphingIn = false;
+  // Don't set morphingOut - let the boat continue floating
+}
 
     noteEl.classList.add('closing');
 
@@ -795,13 +807,19 @@ header.ripple span.figtree-adrift {
   }
 
   function openNoteFromBoat(boat){
-    boat.morphingIn = true;
-    boat.morphT0 = performance.now();
-    const meta = `<div class="note-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>`;
-    const body = `<div class="note-text">${boat.doubt.text}</div>`;
-    const maxSize = Math.min(350, window.innerWidth * 0.9);
-    createNote({ x:boat.x, y:boat.y, title:'Anonymous Doubt', bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
-  }
+  boat.morphingIn = true;
+  boat.morphT0 = performance.now();
+  const meta = `<div class="note-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>`;
+  const body = `<div class="note-text">${boat.doubt.text}</div>`;
+  const maxSize = Math.min(350, window.innerWidth * 0.9);
+  
+  // Center notes on mobile devices (640px and below)
+  const isMobile = window.innerWidth <= 640;
+  const noteX = isMobile ? innerWidth / 2 : boat.x;
+  const noteY = isMobile ? innerHeight / 2 : boat.y;
+  
+  createNote({ x:noteX, y:noteY, title:'Anonymous Doubt', bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
+}
 
   /* CTA → composer note */
   function openComposerNote() {
@@ -900,7 +918,7 @@ header.ripple span.figtree-adrift {
     let overBoat = false;
     
     for(const b of boats){ 
-      if(b.hit(mx,my) && !b.morphingIn && !b.paused){ 
+      if(b.hit(mx,my) && !b.morphingOut){
         overBoat = true;
         break;
       }
@@ -915,7 +933,7 @@ header.ripple span.figtree-adrift {
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     for(const b of boats){ 
       if(b.hit(mx,my)){ 
-        if(b.morphingIn || b.paused) return; 
+        if(b.morphingOut) return; 
         openNoteFromBoat(b); 
         break; 
       } 
