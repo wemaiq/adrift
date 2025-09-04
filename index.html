@@ -138,26 +138,43 @@
   .note.dragging{ cursor: grabbing; }
   .note.closing{ opacity:0; transform: scale(.98) translateZ(0); pointer-events:none; }
 
+  /* FIXED: Circle close button for mobile */
   .note-close{
     position:absolute; top:10px; right:10px;
-    width:28px; height:28px; border-radius:999px;
-    display:grid; place-items:center;
+    width:28px; height:28px;
+    border-radius:50%; /* Changed from 999px to 50% */
+    aspect-ratio: 1 / 1; /* Force square */
+    display:flex; /* Changed from grid to flex */
+    align-items:center;
+    justify-content:center;
     background: rgba(12,14,18,.65);
     color:#fff; font-size:16px; line-height:1;
     border:1px solid rgba(255,255,255,.18);
     box-shadow:none;
     cursor:pointer;
-    opacity:0; transform: scale(.92);
+    opacity:0; 
     pointer-events:none;
     transition: opacity .25s ease, transform .20s ease, background .2s ease, border-color .2s ease;
     z-index:3;
+    /* Mobile fixes */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-align: center;
+    /* Force GPU acceleration */
+    transform: scale(.92) translateZ(0);
+    -webkit-transform: scale(.92) translateZ(0);
   }
   .note.unfold .note-close{
-    opacity:1; transform: scale(1);
+    opacity:1; transform: scale(1) translateZ(0);
     transition-delay: 1.25s, 1.25s, 0s, 0s; /* appear after unfold */
+    pointer-events:auto;
   }
-  .note-close:hover{ transform: scale(1.06); background: rgba(12,14,18,.78); border-color: rgba(255,255,255,.28); }
-  .note-close:active{ transform: scale(.98); }
+  .note-close:hover{ transform: scale(1.06) translateZ(0); background: rgba(12,14,18,.78); border-color: rgba(255,255,255,.28); }
+  .note-close:active{ transform: scale(.98) translateZ(0); }
   .note-close:focus-visible{ outline:2px solid rgba(255, 180, 60, 0.5); outline-offset:2px; }
 
   .note-stage, .note-frame {
@@ -308,6 +325,17 @@ header.ripple span.figtree-adrift {
   header {
     font-size: 18px; /* Slightly smaller header on mobile */
   }
+  
+  /* Larger close button on mobile for better touch targets */
+  .note-close {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    min-width: 32px;
+    min-height: 32px;
+    max-width: 32px;
+    max-height: 32px;
+  }
 }
 
 
@@ -317,6 +345,17 @@ header.ripple span.figtree-adrift {
   .sound-toggle { right: 10px; bottom: 10px; }
   .cta-btn { bottom: 10px; padding: 16px 24px; }
   header { top: 10px; }
+}
+
+/* For high-DPI displays (retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .note-close {
+    /* Force antialiasing for smoother circles */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    backface-visibility: hidden;
+    transform-style: flat;
+  }
 }
 </style>
 </head>
@@ -577,11 +616,35 @@ header.ripple span.figtree-adrift {
         }
       }
 
+      // FIXED: iOS-compatible blend mode rendering
       ctx.globalAlpha = a;
-      const prev = ctx.globalCompositeOperation;
-      ctx.globalCompositeOperation = 'screen';
-      ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
-      ctx.globalCompositeOperation = prev;
+      
+      // Check if running on iOS (all browsers on iOS use WebKit)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if(isIOS) {
+        // Use offscreen canvas for iOS to fix blend mode issue
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = displayW;
+        offCanvas.height = displayH;
+        const offCtx = offCanvas.getContext('2d');
+        
+        // Draw video to offscreen canvas first
+        offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+        
+        // Then apply blend mode when drawing canvas-to-canvas
+        ctx.globalCompositeOperation = 'screen';
+        ctx.drawImage(offCanvas, -displayW/2, -displayH/2);
+        ctx.globalCompositeOperation = 'source-over'; // Reset
+      } else {
+        // Original code for non-iOS devices
+        const prev = ctx.globalCompositeOperation;
+        ctx.globalCompositeOperation = 'screen';
+        ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
+        ctx.globalCompositeOperation = prev;
+      }
+      
       ctx.restore();
     }
     hit(mx,my){ 
