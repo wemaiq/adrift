@@ -512,59 +512,105 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAu
 
   const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
 
-  // Holds fetched approved doubts
-  let APPROVED_DOUBTS = [];
+  // Holds fetched approved doubts and session tracking
+let APPROVED_DOUBTS = [];
+let USED_DOUBT_IDS = new Set(); // Track used doubts this session
+let SHUFFLED_DOUBTS = []; // Pre-shuffled pool for current session
 
-  function pickRandomDoubt() {
-    if (APPROVED_DOUBTS.length === 0) {
-      // Safe placeholder if fetch returns nothing (or before it completes)
-      return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
-    }
-    return APPROVED_DOUBTS[Math.floor(Math.random() * APPROVED_DOUBTS.length)];
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function initializeDoubtPool() {
+  // Create a shuffled copy of all approved doubts
+  SHUFFLED_DOUBTS = shuffleArray(APPROVED_DOUBTS);
+  USED_DOUBT_IDS.clear();
+  console.log('Initialized shuffled doubt pool:', SHUFFLED_DOUBTS.length, 'doubts');
+}
+
+function pickRandomDoubt() {
+  if (APPROVED_DOUBTS.length === 0) {
+    // Safe placeholder if fetch returns nothing (or before it completes)
+    return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
   }
 
-  // Add this function to periodically refresh doubts from Supabase
+  // If we've used all doubts, reinitialize the pool
+  if (USED_DOUBT_IDS.size >= APPROVED_DOUBTS.length) {
+    console.log('All doubts used, reshuffling pool');
+    initializeDoubtPool();
+  }
+
+  // Find the next unused doubt from our shuffled pool
+  let selectedDoubt = null;
+  for (const doubt of SHUFFLED_DOUBTS) {
+    if (!USED_DOUBT_IDS.has(doubt.id)) {
+      selectedDoubt = doubt;
+      USED_DOUBT_IDS.add(doubt.id);
+      break;
+    }
+  }
+
+  // Fallback (shouldn't happen with the logic above)
+  if (!selectedDoubt) {
+    selectedDoubt = SHUFFLED_DOUBTS[0];
+    USED_DOUBT_IDS.add(selectedDoubt.id);
+  }
+
+  return selectedDoubt;
+}
+
+
   async function refreshDoubtPool() {
-    try {
-      const freshDoubts = await fetchApprovedDoubts(600);
-      if (freshDoubts.length > 0) {
-        APPROVED_DOUBTS = freshDoubts;
+  try {
+    const freshDoubts = await fetchApprovedDoubts(600);
+    if (freshDoubts.length > 0) {
+      const oldLength = APPROVED_DOUBTS.length;
+      APPROVED_DOUBTS = freshDoubts;
+      
+      // Only reinitialize if we got significantly more doubts
+      if (freshDoubts.length > oldLength * 1.2) {
+        initializeDoubtPool();
+        console.log('Refreshed and reshuffled doubt pool:', APPROVED_DOUBTS.length, 'doubts');
+      } else {
         console.log('Refreshed doubt pool:', APPROVED_DOUBTS.length, 'doubts');
       }
-    } catch (err) {
-      console.error('Failed to refresh doubts:', err);
-      // Keep using existing doubts if refresh fails
     }
+  } catch (err) {
+    console.error('Failed to refresh doubts:', err);
+    // Keep using existing doubts if refresh fails
   }
+}
+
 
   class Boat{
     constructor(){ this.reset(true); }
     reset(initial = false) {
-      // Use canvas dimensions directly (no DPR scaling)
-      this.yBase = Math.random() * H * 0.75 + H * 0.1;
-      this.x = initial ? Math.random() * W : -(this._w || 160) - 30;
+  // Use canvas dimensions directly (no DPR scaling)
+  this.yBase = Math.random() * H * 0.75 + H * 0.1;
+  this.x = initial ? Math.random() * W : -(this._w || 160) - 30;
 
-      this.phase = Math.random() * Math.PI * 2;
-      this.alpha = 0.95;
-      
-      // Get a fresh doubt when resetting
-      this.doubt = pickRandomDoubt();
-      
-      // Occasionally refresh the doubt pool (every 10th boat that resets)
-      if (!initial && Math.random() < 0.1) {
-        refreshDoubtPool();
-      }
-      
-      this._h = BOAT_HEIGHT;
-      this._w = BOAT_HEIGHT * 1.8;
-      this.vx = 0;
-      this.vy = 0;
-      this.highlightUntil = 0;
-      this.paused = false;
-      this.morphingIn = false;
-      this.morphingOut = false;
-      this.morphT0 = 0;
-    }
+  this.phase = Math.random() * Math.PI * 2;
+  this.alpha = 0.95;
+  
+  // Get a fresh doubt when resetting (now guaranteed unique per session)
+  this.doubt = pickRandomDoubt();
+  
+  this._h = BOAT_HEIGHT;
+  this._w = BOAT_HEIGHT * 1.8;
+  this.vx = 0;
+  this.vy = 0;
+  this.highlightUntil = 0;
+  this.paused = false;
+  this.morphingIn = false;
+  this.morphingOut = false;
+  this.morphT0 = 0;
+}
+
     update(t, boats){
       const canMove = !(this.morphingOut);
       if(canMove){ 
@@ -952,21 +998,26 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAu
      Boot flow
      ========= */
   (async function init(){
-    try{
-      APPROVED_DOUBTS = await fetchApprovedDoubts(600);
-      if (APPROVED_DOUBTS.length === 0) {
-        console.warn('No approved doubts found; using placeholder.');
-        APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
-      }
-    } catch(err){
-      console.error(err);
-      // Soft fallback if Supabase is unreachable
-      APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
-    } finally {
-      // Seed boats only after we have something to show
-      boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
+  try{
+    APPROVED_DOUBTS = await fetchApprovedDoubts(600);
+    if (APPROVED_DOUBTS.length === 0) {
+      console.warn('No approved doubts found; using placeholder.');
+      APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
     }
-  })();
+    
+    // Initialize the shuffled pool after loading doubts
+    initializeDoubtPool();
+    
+  } catch(err){
+    console.error(err);
+    // Soft fallback if Supabase is unreachable
+    APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
+    initializeDoubtPool();
+  } finally {
+    // Seed boats only after we have something to show
+    boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
+  }
+})();
 </script>
 
 
