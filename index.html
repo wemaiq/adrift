@@ -75,6 +75,12 @@
     }
   }
 
+  @keyframes fadeInCounter {
+    to {
+      opacity: 1;
+    }
+  }
+
   /* Initially hide main content */
   .main-content {
     opacity: 0;
@@ -367,9 +373,10 @@ header.ripple span.figtree-adrift {
 </head>
 <body class="figtree-adrift">
   <!-- Intro overlay -->
-  <div id="intro-overlay">
+ <div id="intro-overlay">
     <div id="intro-text">
       <span>Doubt is universal, yet deeply personal. It comes and goes like waves, like passing weather. Never the sky, never the sea. And when it fades, the stillness of being remains.</span>
+      <div id="doubt-counter" style="margin-top: 20px; font-size: 12px; color: rgba(236, 236, 237, 0.5); opacity: 0; animation: fadeInCounter 2s ease-in 3s forwards;">— doubts submitted</div>
     </div>
   </div>
 
@@ -423,26 +430,40 @@ header.ripple span.figtree-adrift {
   const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
-  async function fetchApprovedDoubts(limit = 500) {
-    const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&approved=is.true&order=created_at.desc&limit=${limit}`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${SUPABASE_ANON}`,
-        Accept: 'application/json'
-      }
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(()=> '');
-      throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
+async function fetchApprovedDoubts(limit = 500) {
+  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&approved=is.true&order=created_at.desc&limit=${limit}`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+      Accept: 'application/json'
     }
-    const rows = await res.json();
-    return rows.map(r => ({
-      id: r.id,
-      text: r.doubt ?? '',
-      date: (r.created_at || new Date().toISOString()).slice(0,10)
-    })).filter(d => d.text && d.text.trim().length);
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(()=> '');
+    throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
   }
+  const rows = await res.json();
+  return rows.map(r => ({
+    id: r.id,
+    text: r.doubt ?? '',
+    date: (r.created_at || new Date().toISOString()).slice(0,10)
+  })).filter(d => d.text && d.text.trim().length);
+}
+
+async function fetchTotalDoubts() {
+  const url = `${SUPABASE_URL}/rest/v1/doubts?select=count&approved=is.true`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+      Accept: 'application/json',
+      Prefer: 'count=exact'
+    }
+  });
+  if (!res.ok) return 0;
+  return parseInt(res.headers.get('Content-Range')?.split('/')[1] || '0');
+}
 
   /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
   const N8N_WEBHOOK_URL = 'https://alexmiretski.app.n8n.cloud/webhook/release-doubt';
@@ -994,29 +1015,42 @@ function pickRandomDoubt() {
   releaseBtn.addEventListener('click', openComposerNote);
   addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeNote(); } });
 
-  /* =========
+ /* =========
      Boot flow
      ========= */
   (async function init(){
-  try{
-    APPROVED_DOUBTS = await fetchApprovedDoubts(600);
-    if (APPROVED_DOUBTS.length === 0) {
-      console.warn('No approved doubts found; using placeholder.');
-      APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
-    }
-    
-    // Initialize the shuffled pool after loading doubts
-    initializeDoubtPool();
-    
-  } catch(err){
-    console.error(err);
-    // Soft fallback if Supabase is unreachable
-    APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
-    initializeDoubtPool();
-  } finally {
-    // Seed boats only after we have something to show
-    boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
+try{
+  APPROVED_DOUBTS = await fetchApprovedDoubts(600);
+  if (APPROVED_DOUBTS.length === 0) {
+    console.warn('No approved doubts found; using placeholder.');
+    APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
   }
+  
+  // Initialize the shuffled pool after loading doubts
+  initializeDoubtPool();
+  
+} catch(err){
+  console.error(err);
+  // Soft fallback if Supabase is unreachable
+  APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
+  initializeDoubtPool();
+} finally {
+  // Seed boats only after we have something to show
+  boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
+}
+
+// Update counter on load
+fetchTotalDoubts().then(count => {
+  const counter = document.getElementById('doubt-counter');
+  if (counter && count > 0) {
+    counter.textContent = `${count} doubts submitted`;
+  } else if (counter) {
+    counter.style.display = 'none';
+  }
+}).catch(() => {
+  const counter = document.getElementById('doubt-counter');
+  if (counter) counter.style.display = 'none';
+});
 })();
 </script>
 
