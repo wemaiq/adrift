@@ -113,7 +113,7 @@
   .sound-toggle:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.25); outline-offset:2px; }
 
   /* Center-bottom CTA (kept) */
-  .cta-btn{
+  .cta-btn{ 
     position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:5;
     padding:28px 36px; border-radius:9999px; font-size:13px; line-height:1; color:#fff;
     letter-spacing: 0.05em;
@@ -349,7 +349,13 @@ header.ripple span.figtree-adrift {
   min-height: 32px;
   max-width: 32px;
   max-height: 32px;
-}
+  /* Add these for better centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif; /* More consistent font */
+  }
 }
 
 
