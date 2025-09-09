@@ -519,18 +519,55 @@ const DEFAULT_VOL = 0.28;
 function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
 function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
 
-let videoReady=false; 
-boatVideo.addEventListener('canplay', ()=>{ 
-  videoReady=true; 
-  if(boatVideo.paused) boatVideo.play().catch(()=>{}); 
-}, {once:true});
+let videoReady = false;
+let videoRestartAttempts = 0;
+const MAX_RESTART_ATTEMPTS = 2;
 
-// Auto-start video after intro sequence (removed user interaction requirement)
+boatVideo.addEventListener('canplay', () => { 
+  videoReady = true; 
+  if(boatVideo.paused) boatVideo.play().catch(() => {}); 
+}, {once: true});
+
+function checkAndRestartVideo() {
+  if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+    console.warn(`Video not ready after timeout, attempting restart ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
+    videoRestartAttempts++;
+    
+    const currentSrc = boatVideo.src;
+    boatVideo.src = '';
+    boatVideo.load();
+    boatVideo.src = currentSrc + '?t=' + Date.now();
+    
+    setTimeout(() => {
+      boatVideo.play().catch(() => {
+        console.error('Video restart failed');
+      });
+    }, 500);
+    
+    if (videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+      setTimeout(checkAndRestartVideo, 8000);
+    }
+  }
+}
+
+// Start immediately, don't wait
+boatVideo.play().catch(() => {});
+
+// Monitor for failures
 setTimeout(() => {
-  boatVideo.play().catch(()=>{});
-}, 10500); // Start when main content becomes visible
+  if (!videoReady) {
+    checkAndRestartVideo();
+  }
+}, 15000);
 
-const ensurePlay = ()=>{ boatVideo.play().catch(()=>{}); startAudio(); };
+const ensurePlay = () => { 
+  if (!videoReady) {
+    console.log('User interaction - forcing video restart');
+    checkAndRestartVideo();
+  }
+  boatVideo.play().catch(() => {}); 
+  startAudio(); 
+};
 addEventListener('pointerdown', ensurePlay, {once:true}); 
 addEventListener('keydown', ensurePlay, {once:true});
 soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
@@ -987,10 +1024,8 @@ function pickRandomDoubt() {
     requestAnimationFrame(animate); 
   }
   
-  // Delay animation start until intro is done
-  setTimeout(() => {
-    animate();
-  }, 10500); // Start after intro completes
+  // Start animation immediately, don't wait for intro
+animate();
 
   /* Interactions */
   // Handle hover cursor
