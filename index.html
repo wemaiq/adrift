@@ -155,9 +155,9 @@
   .note-close{
     position:absolute; top:10px; right:10px;
     width:28px; height:28px;
-    border-radius:50%; /* Changed from 999px to 50% */
-    aspect-ratio: 1 / 1; /* Force square */
-    display:flex; /* Changed from grid to flex */
+    border-radius:50%;
+    aspect-ratio: 1 / 1;
+    display:flex;
     align-items:center;
     justify-content:center;
     background: rgba(12,14,18,.65);
@@ -169,7 +169,6 @@
     pointer-events:none;
     transition: opacity .25s ease, transform .20s ease, background .2s ease, border-color .2s ease;
     z-index:3;
-    /* Mobile fixes */
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -177,13 +176,12 @@
     box-sizing: border-box;
     overflow: hidden;
     text-align: center;
-    /* Force GPU acceleration */
     transform: scale(.92) translateZ(0);
     -webkit-transform: scale(.92) translateZ(0);
   }
   .note.unfold .note-close{
     opacity:1; transform: scale(1) translateZ(0);
-    transition-delay: 1.25s, 1.25s, 0s, 0s; /* appear after unfold */
+    transition-delay: 1.25s, 1.25s, 0s, 0s;
     pointer-events:auto;
   }
   .note-close:hover{ transform: scale(1.06) translateZ(0); background: rgba(12,14,18,.78); border-color: rgba(255,255,255,.28); }
@@ -197,7 +195,7 @@
   .note-frame{
     opacity:0;
     box-shadow: 0 0 40px rgba(0,0,0,0.06);
-    animation: note-show 0.5s 1s ease forwards; /* reveal after folds */
+    animation: note-show 0.5s 1s ease forwards;
   }
 
   .note-box{
@@ -572,12 +570,19 @@ addEventListener('pointerdown', ensurePlay, {once:true});
 addEventListener('keydown', ensurePlay, {once:true});
 soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAudio.paused){ bgAudio.play().catch(()=>{}); } });
+
   /* ===== Boats ===== */
   const CROP = {x:0, y:0, w:1, h:1};
   const BOAT_COUNT = window.innerWidth <= 640 ? 8 : 11, BOAT_HEIGHT=140;
   const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
 
   const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
+
+  // Perspective tuning
+  const PERSPECTIVE_MIN_SCALE = 0.70;
+  const PERSPECTIVE_MAX_SCALE = 1.35;
+  const OPACITY_MIN = 0.35;
+  const OPACITY_MAX = 0.95;
 
   // Holds fetched approved doubts and session tracking
 let APPROVED_DOUBTS = [];
@@ -617,7 +622,7 @@ function pickRandomDoubt() {
   for (const doubt of SHUFFLED_DOUBTS) {
     if (!USED_DOUBT_IDS.has(doubt.id)) {
       selectedDoubt = doubt;
-      USED_DOUBT_IDS.add(doubt.id);
+      USED_DOUBT_IDS.add(selectedDoubt.id);
       break;
     }
   }
@@ -657,26 +662,29 @@ function pickRandomDoubt() {
   class Boat{
     constructor(){ this.reset(true); }
     reset(initial = false) {
-  // Use canvas dimensions directly (no DPR scaling)
-  this.yBase = Math.random() * H * 0.75 + H * 0.1;
-  this.x = initial ? Math.random() * W : -(this._w || 160) - 30;
+      // Use canvas dimensions directly (no DPR scaling)
+      this.yBase = Math.random() * H * 0.75 + H * 0.1;
 
-  this.phase = Math.random() * Math.PI * 2;
-  this.alpha = 0.95;
-  
-  // Get a fresh doubt when resetting (now guaranteed unique per session)
-  this.doubt = pickRandomDoubt();
-  
-  this._h = BOAT_HEIGHT;
-  this._w = BOAT_HEIGHT * 1.8;
-  this.vx = 0;
-  this.vy = 0;
-  this.highlightUntil = 0;
-  this.paused = false;
-  this.morphingIn = false;
-  this.morphingOut = false;
-  this.morphT0 = 0;
-}
+      // ENTRY: start fully off-screen to the left (by half-width + 2px)
+      const approxW = this._w || (BOAT_HEIGHT * 1.8);
+      this.x = initial ? Math.random() * W : -(approxW * 0.5) - 2;
+
+      this.phase = Math.random() * Math.PI * 2;
+      this.alpha = 0.95;
+      
+      // Get a fresh doubt when resetting (now guaranteed unique per session)
+      this.doubt = pickRandomDoubt();
+      
+      this._h = BOAT_HEIGHT;
+      this._w = BOAT_HEIGHT * 1.8;
+      this.vx = 0;
+      this.vy = 0;
+      this.highlightUntil = 0;
+      this.paused = false;
+      this.morphingIn = false;
+      this.morphingOut = false;
+      this.morphT0 = 0;
+    }
 
     update(t, boats){
       const canMove = !(this.morphingOut);
@@ -714,13 +722,25 @@ function pickRandomDoubt() {
       if(!videoReady) return;
       const vW=boatVideo.videoWidth||640, vH=boatVideo.videoHeight||360;
       const srcW=vW*CROP.w, srcH=vH*CROP.h, srcX=vW*CROP.x, srcY=vH*CROP.y;
-      const displayH=BOAT_HEIGHT, displayW=displayH*(srcW/srcH);
-      this._w=displayW; this._h=displayH;
 
-      let a = this.alpha;
+      // PERSPECTIVE: scale & opacity by vertical position
+      const yNorm = Math.max(0, Math.min(1, (this.y || this.yBase) / H));
+      const scale = PERSPECTIVE_MIN_SCALE + (PERSPECTIVE_MAX_SCALE - PERSPECTIVE_MIN_SCALE) * yNorm;
+
+      // Bottom 50% = full opacity; top 50% fades
+      let a;
+      if (yNorm >= 0.5) {
+        a = 1;
+      } else {
+        const t = yNorm / 0.5;
+        a = OPACITY_MIN + (1 - OPACITY_MIN) * t;
+      }
       if(this.morphingOut) a = 0;
-
       if(a <= 0) return;
+
+      const displayH = BOAT_HEIGHT * scale;
+      const displayW = displayH * (srcW/srcH);
+      this._w=displayW; this._h=displayH;
 
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -748,28 +768,21 @@ function pickRandomDoubt() {
       // FIXED: iOS-compatible blend mode rendering
       ctx.globalAlpha = a;
       
-      // Check if running on iOS (all browsers on iOS use WebKit)
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
       if(isIOS) {
-  // Use offscreen canvas for iOS to fix blend mode issue with proper DPR scaling
-  const dpr = window.devicePixelRatio || 1;
-  const offCanvas = document.createElement('canvas');
-  offCanvas.width = displayW * dpr;
-  offCanvas.height = displayH * dpr;
-  const offCtx = offCanvas.getContext('2d');
-  offCtx.scale(dpr, dpr);
-  
-  // Draw video to offscreen canvas first
-  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-  
-  // Then apply blend mode when drawing canvas-to-canvas
-  ctx.globalCompositeOperation = 'screen';
-  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
-  ctx.globalCompositeOperation = 'source-over'; // Reset
-} else {
-        // Original code for non-iOS devices
+        const dpr = window.devicePixelRatio || 1;
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = displayW * dpr;
+        offCanvas.height = displayH * dpr;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.scale(dpr, dpr);
+        offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+        ctx.globalCompositeOperation = 'screen';
+        ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
+        ctx.globalCompositeOperation = 'source-over';
+      } else {
         const prev = ctx.globalCompositeOperation;
         ctx.globalCompositeOperation = 'screen';
         ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
@@ -906,9 +919,9 @@ function pickRandomDoubt() {
     noteClosing = true;
 
     if(noteBoat){
-  noteBoat.morphingIn = false;
-  // Don't set morphingOut - let the boat continue floating
-}
+      noteBoat.morphingIn = false;
+      // Don't set morphingOut - let the boat continue floating
+    }
 
     noteEl.classList.add('closing');
 
@@ -926,19 +939,19 @@ function pickRandomDoubt() {
   }
 
   function openNoteFromBoat(boat){
-  boat.morphingIn = true;
-  boat.morphT0 = performance.now();
-  const meta = `<div class="note-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>`;
-  const body = `<div class="note-text">${boat.doubt.text}</div>`;
-  const maxSize = Math.min(350, window.innerWidth * 0.9);
-  
-  // Center notes on mobile devices (640px and below)
-  const isMobile = window.innerWidth <= 640;
-  const noteX = isMobile ? innerWidth / 2 : boat.x;
-  const noteY = isMobile ? innerHeight / 2 : boat.y;
-  
-  createNote({ x:noteX, y:noteY, title:'Anonymous Doubt', bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
-}
+    boat.morphingIn = true;
+    boat.morphT0 = performance.now();
+    const meta = `<div class="note-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>`;
+    const body = `<div class="note-text">${boat.doubt.text}</div>`;
+    const maxSize = Math.min(350, window.innerWidth * 0.9);
+    
+    // Center notes on mobile devices (640px and below)
+    const isMobile = window.innerWidth <= 640;
+    const noteX = isMobile ? innerWidth / 2 : boat.x;
+    const noteY = isMobile ? innerHeight / 2 : boat.y;
+    
+    createNote({ x:noteX, y:noteY, title:'Anonymous Doubt', bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
+  }
 
   /* CTA → composer note */
   function openComposerNote() {
@@ -1017,15 +1030,23 @@ function pickRandomDoubt() {
   /* Loop */
   function animate(now=0){ 
     ctx.clearRect(0,0,W,H); 
+
+    // Update all first
     for(const b of boats){ 
       b.update(now, boats); 
-      b.draw(now); 
-    } 
+    }
+
+    // Draw sorted by y for proper layering (back-to-front)
+    const byDepth = [...boats].sort((a,b)=> (a.y||a.yBase) - (b.y||b.yBase));
+    for(const b of byDepth){
+      b.draw(now);
+    }
+
     requestAnimationFrame(animate); 
   }
   
   // Start animation immediately, don't wait for intro
-animate();
+  animate();
 
   /* Interactions */
   // Handle hover cursor
