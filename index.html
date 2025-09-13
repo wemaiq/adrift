@@ -472,8 +472,10 @@ async function fetchTotalDoubts() {
   return parseInt(res.headers.get('Content-Range')?.split('/')[1] || '0');
 }
 
-  /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
-  const N8N_WEBHOOK_URL = 'https://alexmiretski.app.n8n.cloud/webhook/release-doubt';
+  /* ---------- webhook ---------- */
+
+const N8N_WEBHOOK_URL = 'https://black-flower-1292.ice5al.workers.dev/api/release-doubt';
+
 
   async function postDoubtToN8N(text){
     const res = await fetch(N8N_WEBHOOK_URL, {
