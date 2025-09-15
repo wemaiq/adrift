@@ -574,7 +574,8 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAu
 
   /* ===== Boats ===== */
   const CROP = {x:0, y:0, w:1, h:1};
-  const BOAT_COUNT = window.innerWidth <= 640 ? 8 : 11, BOAT_HEIGHT=140;
+  // 8 on small screens, 11 by default, 18 on big displays (e.g., 27" iMac)
+const BOAT_COUNT = window.innerWidth >= 1600 ? 18 : (window.innerWidth <= 640 ? 8 : 11), BOAT_HEIGHT = 140;
   const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
 
   const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
