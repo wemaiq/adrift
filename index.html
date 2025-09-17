@@ -46,38 +46,83 @@
     pointer-events: none;
   }
   
+  .intro-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 520px;
+    gap: 20px;
+  }
+
+  #doubt-counter {
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(236, 236, 237, 0.6);
+    opacity: 0;
+    transform: translateY(8px);
+    animation: introContentReveal 1.2s ease forwards;
+    font-weight: 400;
+  }
+
   #intro-text {
     font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
-    font-size: 16px;
+    font-size: 19.2px;
     line-height: 1.8;
     color: rgba(236, 236, 237, 0.85);
-    text-align: center;
-    max-width: 500px;
+    max-width: 520px;
+    margin: 0;
     opacity: 0;
-    animation: fadeInText 2s ease-in forwards;
+    transform: translateY(8px);
+    animation: introContentReveal 1.2s ease forwards;
     font-weight: 300;
     letter-spacing: 0.02em;
   }
-  
+
   #intro-text.fade-out-text {
     animation: fadeOutText 1.5s ease-out forwards;
   }
-  
-  @keyframes fadeInText {
+
+  #intro-overlay .cta-btn {
+    position: static;
+    bottom: auto;
+    z-index: auto;
+  }
+
+  .intro-enter-btn {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: introButtonRise 0.9s ease forwards;
+    animation-delay: 1s;
+  }
+
+  @keyframes introContentReveal {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
-  
+
   @keyframes fadeOutText {
     to {
       opacity: 0;
     }
   }
 
-  @keyframes fadeInCounter {
+  @keyframes introButtonRise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 
@@ -113,8 +158,7 @@
   .sound-toggle:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.25); outline-offset:2px; }
 
   /* Center-bottom CTA (kept) */
-  .cta-btn{ 
-    position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:5;
+  .cta-btn{
     padding:28px 36px; border-radius:9999px; font-size:13px; line-height:1; color:#fff;
     letter-spacing: 0.05em;
     border:1px solid rgba(255,255,255,.28);
@@ -122,6 +166,15 @@
     backdrop-filter: blur(3px);
     transition: box-shadow .25s ease, transform .2s ease, border-color .25s ease, background .25s ease;
     cursor:pointer; user-select:none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .cta-btn--floating {
+    position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:5;
   }
   .cta-btn:hover{ box-shadow: 0 0 36px 12px rgba(255, 219, 90, 0.174), 0 0 8px 2px rgba(255,255,255,.25); border-color: rgba(255,255,255,.5); }
   .cta-btn:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.35); outline-offset:3px; }
@@ -249,6 +302,12 @@
     box-shadow: 0 0 0 1px rgba(255, 180, 60, 0.15);
   }
   .compose-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:12px; color:#4c5562; }
+ .compose-disclaimer {
+  font-size: 11px;
+  color: rgba(16,21,28,0.55);
+  text-align: center;
+  margin-top: 64px;
+}
   .pill-btn{ padding:12px 18px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#0f172a; color:#fff; cursor:pointer; }
   .pill-btn:focus-visible {
     outline: 2px solid rgba(255, 180, 60, 0.5);
@@ -306,9 +365,25 @@ header.ripple span.figtree-adrift {
 
 /* Mobile responsive styles */
 @media (max-width: 640px) {
+  .intro-content {
+    max-width: 90vw;
+    gap: 16px;
+  }
+
+  #doubt-counter {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
   #intro-text {
-    font-size: 14px;
-    max-width: 85vw;
+    font-size: 16.8px;
+    max-width: 90vw;
+  }
+
+  #intro-overlay .cta-btn {
+    width: auto;
+    padding: 20px 28px;
+    align-self: center;
   }
   
   .note-content {
@@ -330,6 +405,9 @@ header.ripple span.figtree-adrift {
   .cta-btn {
     padding: 20px 28px; /* Slightly smaller on mobile */
     font-size: 12px;
+  }
+
+  .cta-btn--floating {
     bottom: 70px;
   }
   
@@ -362,7 +440,8 @@ header.ripple span.figtree-adrift {
 @media (max-height: 500px) and (orientation: landscape) {
   .hint { left: 10px; bottom: 10px;}
   .sound-toggle { right: 10px; bottom: 10px; }
-  .cta-btn { bottom: 16px; padding: 16px 24px; }
+  .cta-btn { padding: 16px 24px; }
+  .cta-btn--floating { bottom: 16px; }
   header { top: 10px; }
 }
 
@@ -381,9 +460,10 @@ header.ripple span.figtree-adrift {
 <body class="figtree-adrift">
   <!-- Intro overlay -->
  <div id="intro-overlay">
-    <div id="intro-text">
-      <span>Doubt is universal, yet deeply personal. It comes and goes like waves, like passing weather. Never the sky, never the sea. And when it fades, the stillness of being remains.</span>
-      <div id="doubt-counter" style="margin-top: 20px; font-size: 12px; color: rgba(236, 236, 237, 0.5); opacity: 0; animation: fadeInCounter 2s ease-in 3s forwards;">— doubts released</div>
+    <div class="intro-content">
+      <div id="doubt-counter" aria-live="polite" data-start-value="0">0 doubts released</div>
+      <p id="intro-text">Adrift is a quiet space where doubts become paper boats and drift together across a shared sea.</p>
+      <button id="enterBtn" class="cta-btn intro-enter-btn" type="button">Enter</button>
     </div>
   </div>
 
@@ -401,7 +481,7 @@ header.ripple span.figtree-adrift {
 
     <div class="hint">Click boat to unfold</div>
     <button id="soundToggle" class="sound-toggle" aria-pressed="false" aria-label="Enable sound">Sound: Off</button>
-    <button id="releaseBtn" class="cta-btn" aria-label="Release your doubt">Release your doubt</button>
+    <button id="releaseBtn" class="cta-btn cta-btn--floating" aria-label="Release your doubt">Release your doubt</button>
   </div>
 
   <script src="./rain.js" defer=""></script>
@@ -413,23 +493,29 @@ header.ripple span.figtree-adrift {
   const introOverlay = document.getElementById('intro-overlay');
   const introText = document.getElementById('intro-text');
   const mainContent = document.querySelector('.main-content');
-  
-  // Start the intro sequence
-  setTimeout(() => {
-    // Start fading out the text after 8 seconds
-    introText.classList.add('fade-out-text');
-    
-    // After text fades, fade out overlay and show main content
-    setTimeout(() => {
-      introOverlay.classList.add('fade-out');
+  const enterBtn = document.getElementById('enterBtn');
+  const doubtCounter = document.getElementById('doubt-counter');
+
+  function revealMainContent() {
+    if (!introOverlay || introOverlay.classList.contains('fade-out')) return;
+    if (introText) {
+      introText.classList.add('fade-out-text');
+    }
+    introOverlay.classList.add('fade-out');
+    if (mainContent) {
       mainContent.classList.add('visible');
-      
-      // Remove intro overlay completely after transition
-      setTimeout(() => {
-        introOverlay.remove();
-      }, 2000);
-    }, 500);
-  }, 8000);
+    }
+    setTimeout(() => {
+      introOverlay.remove();
+    }, 1200);
+  }
+
+  if (enterBtn) {
+    enterBtn.addEventListener('click', () => {
+      enterBtn.disabled = true;
+      revealMainContent();
+    });
+  }
 
   /* =====================
      Supabase config (READ)
@@ -470,6 +556,38 @@ async function fetchTotalDoubts() {
   });
   if (!res.ok) return 0;
   return parseInt(res.headers.get('Content-Range')?.split('/')[1] || '0');
+}
+
+function animateDoubtCounter(el, targetValue) {
+  if (!el) return;
+  const finalValue = Math.max(0, targetValue);
+  const startValue = Number(el.dataset.startValue || 0);
+  const formatter = new Intl.NumberFormat();
+  const formatValue = (value) => `${formatter.format(value)} doubt${value === 1 ? '' : 's'} released`;
+
+  if (finalValue <= startValue) {
+    el.textContent = formatValue(finalValue);
+    el.dataset.startValue = String(finalValue);
+    return;
+  }
+
+  let startTime;
+  const duration = 1600;
+
+  function step(timestamp) {
+    if (startTime === undefined) startTime = timestamp;
+    const progress = Math.min((timestamp - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const currentValue = Math.round(startValue + (finalValue - startValue) * eased);
+    el.textContent = formatValue(currentValue);
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      el.dataset.startValue = String(finalValue);
+    }
+  }
+
+  requestAnimationFrame(step);
 }
 
   /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
@@ -574,8 +692,7 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAu
 
   /* ===== Boats ===== */
   const CROP = {x:0, y:0, w:1, h:1};
-  // 8 on small screens, 11 by default, 18 on big displays (e.g., 27" iMac)
-const BOAT_COUNT = window.innerWidth >= 1600 ? 18 : (window.innerWidth <= 640 ? 8 : 11), BOAT_HEIGHT = 140;
+  const BOAT_COUNT = window.innerWidth <= 640 ? 8 : 11, BOAT_HEIGHT=140;
   const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
 
   const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
@@ -965,6 +1082,7 @@ function pickRandomDoubt() {
         <div><span id="charCount">0</span>/200</div>
         <button class="pill-btn" id="submitDoubt" type="button">Release</button>
       </div>
+      <p class="compose-disclaimer">Offensive content will be flagged and removed.</p>
     `;
 
     createNote({
@@ -1108,15 +1226,15 @@ try{
 
 // Update counter on load
 fetchTotalDoubts().then(count => {
-  const counter = document.getElementById('doubt-counter');
-  if (counter && count > 0) {
-    counter.textContent = `${count} doubts released`;
-  } else if (counter) {
-    counter.style.display = 'none';
+  if (!doubtCounter) return;
+  doubtCounter.style.visibility = 'visible';
+  if (count > 0) {
+    animateDoubtCounter(doubtCounter, count);
+  } else {
+    doubtCounter.textContent = '0 doubts released';
   }
 }).catch(() => {
-  const counter = document.getElementById('doubt-counter');
-  if (counter) counter.style.display = 'none';
+  if (doubtCounter) doubtCounter.style.visibility = 'hidden';
 });
 })();
 </script>
