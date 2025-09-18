@@ -672,7 +672,8 @@ header.ripple span.figtree-adrift {
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
 async function fetchApprovedDoubts(limit = 500) {
-  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&approved=is.true&order=created_at.desc&limit=${limit}`;
+  // Changed: order=random() instead of order=created_at.desc
+  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&approved=is.true&order=random()&limit=${limit}`;
   const res = await fetch(url, {
     headers: {
       apikey: SUPABASE_ANON,
