@@ -883,8 +883,14 @@ function shuffleArray(array) {
 }
 
 function initializeDoubtPool() {
-  // Create a shuffled copy of all approved doubts
-  SHUFFLED_DOUBTS = shuffleArray(APPROVED_DOUBTS);
+  // Double shuffle for more randomness
+  let shuffled = shuffleArray(APPROVED_DOUBTS);
+  
+  // Start from a random position in the shuffled array
+  const randomStart = Math.floor(Math.random() * shuffled.length);
+  shuffled = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
+  
+  SHUFFLED_DOUBTS = shuffled;
   USED_DOUBT_IDS.clear();
   console.log('Initialized shuffled doubt pool:', SHUFFLED_DOUBTS.length, 'doubts');
 }
