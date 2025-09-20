@@ -617,8 +617,8 @@ header.ripple span.figtree-adrift {
     const rainP  = preloadScriptAlreadyInPage('rain.js');
     const dataP  = preloadData();
 
-    // Safety cap so we don’t hang forever waiting on a stubborn canplaythrough
-    const cap = new Promise(res => setTimeout(res, 7000));
+    // Safety cap (4s) so we don’t hang forever waiting on a stubborn canplaythrough
+    const cap = new Promise(res => setTimeout(res, 4000));
 
     await Promise.race([
       Promise.all([videoP, audioP, fontsP, rainP, dataP]),
