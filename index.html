@@ -177,231 +177,6 @@
   header{ font-weight:400; position:fixed; top:18px; left:50%; transform:translateX(-50%); letter-spacing:0.25em; font-size:20px; font-family:"Dongle", ui-sans-serif, system-ui, sans-serif;text-transform:uppercase; text-align:center; user-select:none; z-index:5; }
   .hint{ font-weight:400; position:fixed; left:20px; bottom:16px; color:#9aa0a8; font-size:12px; opacity:.7; user-select:none; background: rgba(255,255,255,.03); letter-spacing: 0.05em; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.06); backdrop-filter: blur(3px); z-index:5; }
 
-  /* View toggle */
-  .view-toggle {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.04);
-    backdrop-filter: blur(3px);
-    z-index: 5;
-  }
-
-  .view-toggle__option {
-    position: relative;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: rgba(236,236,237,.68);
-    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 8px 18px;
-    line-height: 1;
-    cursor: pointer;
-    transition: color .25s ease, background .25s ease, box-shadow .25s ease;
-  }
-
-  .view-toggle__option:focus-visible {
-    outline: 2px solid rgba(255, 200, 100, 0.35);
-    outline-offset: 2px;
-  }
-
-  .view-toggle__option.is-active {
-    color: #ececed;
-    background: rgba(255,255,255,.12);
-    box-shadow: 0 10px 24px rgba(0,0,0,.3);
-  }
-
-  .view-toggle__option.is-active::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    border: 1px solid rgba(255,255,255,.22);
-    pointer-events: none;
-  }
-
-  .is-hidden {
-    display: none !important;
-  }
-
-  /* Support column */
-  .support-column {
-    position: fixed;
-    top: 136px;
-    right: 24px;
-    width: min(320px, calc(100vw - 48px));
-    max-height: calc(100vh - 188px);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 18px;
-    border-radius: 22px;
-    background: rgba(14, 18, 28, 0.72);
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 18px 38px rgba(0,0,0,0.45);
-    backdrop-filter: blur(14px);
-    color: rgba(236,236,237,0.86);
-    z-index: 5;
-    box-sizing: border-box;
-  }
-
-  .support-column[hidden] {
-    display: none !important;
-  }
-
-  .support-column__header {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .support-column__title {
-    margin: 0;
-    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgba(236,236,237,0.62);
-  }
-
-  .support-column__subtitle {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: rgba(236,236,237,0.72);
-    letter-spacing: 0.01em;
-  }
-
-  .support-column__list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    padding-right: 2px;
-    scrollbar-width: thin;
-  }
-
-  .support-column__list::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .support-column__list::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .support-column__list::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.16);
-    border-radius: 999px;
-  }
-
-  .support-column__item {
-    margin: 0;
-  }
-
-  .support-item {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 15px 16px 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.05);
-    color: rgba(236,236,237,0.9);
-    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color .22s ease, background .22s ease, transform .22s ease;
-  }
-
-  .support-item:hover,
-  .support-item:focus-visible {
-    border-color: rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.1);
-    transform: translateY(-1px);
-  }
-
-  .support-item:focus-visible {
-    outline: 2px solid rgba(255, 200, 120, 0.45);
-    outline-offset: 2px;
-  }
-
-  .support-item__text {
-    display: block;
-    width: 100%;
-    color: inherit;
-    word-break: break-word;
-  }
-
-  .support-item__meta {
-    display: block;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(236,236,237,0.55);
-  }
-
-  .support-column__empty {
-    font-size: 13px;
-    color: rgba(236,236,237,0.65);
-    line-height: 1.6;
-  }
-
-  @media (max-width: 600px) {
-    .view-toggle {
-      top: 72px;
-      padding: 3px;
-    }
-
-    .view-toggle__option {
-      padding: 6px 14px;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .support-column {
-      top: 118px;
-      right: 16px;
-      left: 16px;
-      width: auto;
-      max-height: calc(100vh - 210px);
-      padding: 16px;
-      gap: 12px;
-    }
-
-    .support-column__title {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-    }
-
-    .support-column__subtitle {
-      font-size: 12px;
-    }
-
-    .support-item {
-      font-size: 14px;
-      padding: 14px;
-    }
-  }
-
   /* Sound toggle */
   .sound-toggle{
     position:fixed; right:20px; bottom:16px; z-index:5;
@@ -714,7 +489,6 @@ header.ripple span.figtree-adrift {
   .cta-btn { padding: 16px 24px; }
   .cta-btn--floating { bottom: 16px; }
   header { top: 10px; }
-  .view-toggle { top: 64px; }
 }
 
 /* For high-DPI displays (retina) */
@@ -733,7 +507,7 @@ header.ripple span.figtree-adrift {
   <!-- Intro overlay -->
  <div id="intro-overlay">
     <div class="intro-content">
-      <div id="doubt-counter" aria-live="polite" data-start-value="0">0 boats released</div>
+      <div id="doubt-counter" aria-live="polite" data-start-value="0">0 doubts released</div>
       <p id="intro-text">Adrift is a quiet space where doubts become paper boats and drift together across a shared sea.</p>
       <button id="enterBtn" class="cta-btn intro-enter-btn" type="button">Enter</button>
     </div>
@@ -742,18 +516,6 @@ header.ripple span.figtree-adrift {
   <!-- Main content wrapper -->
   <div class="main-content">
     <header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
-    <div class="view-toggle" role="group" aria-label="Choose between doubts and affirmations">
-      <button type="button" class="view-toggle__option is-active" data-view="doubts" aria-pressed="true">Doubt</button>
-      <button type="button" class="view-toggle__option" data-view="affirmations" aria-pressed="false">Care</button>
-    </div>
-
-    <aside class="support-column" aria-label="Community care" hidden>
-      <div class="support-column__header">
-        <h2 class="support-column__title">Care from the drift</h2>
-        <p class="support-column__subtitle">Tap a care note to unfold support.</p>
-      </div>
-      <ul class="support-column__list" id="supportList"></ul>
-    </aside>
 
     <!-- media -->
     <video id="boatVideo" src="boat.mp4" loop="" muted="" playsinline="" preload="auto"></video>
@@ -779,292 +541,6 @@ header.ripple span.figtree-adrift {
   const mainContent = document.querySelector('.main-content');
   const enterBtn = document.getElementById('enterBtn');
   const doubtCounter = document.getElementById('doubt-counter');
-  const viewToggle = document.querySelector('.view-toggle');
-  const viewToggleButtons = viewToggle ? viewToggle.querySelectorAll('.view-toggle__option') : [];
-  const supportColumn = document.querySelector('.support-column');
-  const supportList = document.getElementById('supportList');
-  const hintEl = document.querySelector('.hint');
-
-  let SUPPORT_NOTES = [];
-  let ACTIVE_SUPPORT_NOTES = [];
-  let SHUFFLED_SUPPORT_NOTES = [];
-  let USED_SUPPORT_IDS = new Set();
-  let supportFetchPromise = null;
-
-  function normalizeSupportItem(raw = {}, fallbackRow = {}, index = 0) {
-    if (!raw) return null;
-
-    const boolKeys = ['active', 'enabled', 'is_active', 'isActive', 'published', 'visible', 'show', 'approved'];
-    let hasBooleanGate = false;
-    let passesGate = false;
-
-    for (const key of boolKeys) {
-      if (Object.prototype.hasOwnProperty.call(raw, key)) {
-        const value = raw[key];
-        if (typeof value === 'boolean') {
-          hasBooleanGate = true;
-          if (value) passesGate = true;
-        } else if (typeof value === 'string') {
-          const normalized = value.trim().toLowerCase();
-          if (normalized === 'true') {
-            hasBooleanGate = true;
-            passesGate = true;
-          } else if (normalized === 'false') {
-            hasBooleanGate = true;
-          }
-        }
-      }
-    }
-
-    if (hasBooleanGate && !passesGate) return null;
-
-    const text = String(raw.text ?? raw.message ?? raw.body ?? raw.note ?? '').trim();
-    if (!text) return null;
-
-    const attribution = raw.attribution ?? raw.byline ?? raw.author ?? raw.source ?? '';
-    const idCandidate = raw.id ?? raw.uuid ?? raw.slug ?? `${fallbackRow?.id ?? 'support'}-${index}`;
-
-    let date = '';
-    const dateValue = raw.date ?? raw.display_date ?? raw.created_at ?? fallbackRow?.created_at ?? '';
-    if (typeof dateValue === 'string' && dateValue.trim()) {
-      date = dateValue.slice(0, 10);
-    } else if (dateValue instanceof Date) {
-      date = dateValue.toISOString().slice(0, 10);
-    } else if (typeof dateValue === 'number') {
-      const parsed = new Date(dateValue);
-      if (!Number.isNaN(parsed.getTime())) {
-        date = parsed.toISOString().slice(0, 10);
-      }
-    }
-
-    return {
-      id: String(idCandidate),
-      text,
-      attribution: attribution ? String(attribution) : '',
-      date,
-      active: true
-    };
-  }
-
-  function setSupportNotes(items = []) {
-    const normalized = [];
-    const seenIds = new Set();
-    const seenTexts = new Set();
-
-    for (const item of items) {
-      if (!item || !item.text) continue;
-      const idKey = item.id ? String(item.id) : '';
-      const textKey = item.text.replace(/\s+/g, ' ').trim().toLowerCase();
-
-      if (idKey && seenIds.has(idKey)) continue;
-      if (!idKey && textKey && seenTexts.has(textKey)) continue;
-
-      if (idKey) {
-        seenIds.add(idKey);
-      } else if (textKey) {
-        seenTexts.add(textKey);
-      }
-
-      normalized.push({ ...item, id: idKey || `support-${normalized.length + 1}` });
-    }
-
-    SUPPORT_NOTES = normalized;
-    ACTIVE_SUPPORT_NOTES = normalized.filter(item => item && item.active !== false);
-    initializeSupportPool();
-    renderSupportColumn();
-  }
-
-  function initializeSupportPool() {
-    if (!ACTIVE_SUPPORT_NOTES.length) {
-      SHUFFLED_SUPPORT_NOTES = [];
-      USED_SUPPORT_IDS.clear();
-      return;
-    }
-
-    let shuffled = shuffleArray(ACTIVE_SUPPORT_NOTES);
-    const randomStart = Math.floor(Math.random() * shuffled.length);
-    SHUFFLED_SUPPORT_NOTES = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
-    USED_SUPPORT_IDS.clear();
-  }
-
-  function pickRandomCareNote() {
-    if (!ACTIVE_SUPPORT_NOTES.length) {
-      return {
-        id: 'care-placeholder',
-        text: 'Care notes are on their way.',
-        date: new Date().toISOString().slice(0, 10),
-        attribution: ''
-      };
-    }
-
-    if (!SHUFFLED_SUPPORT_NOTES.length || USED_SUPPORT_IDS.size >= SHUFFLED_SUPPORT_NOTES.length) {
-      initializeSupportPool();
-    }
-
-    let selected = null;
-    for (const item of SHUFFLED_SUPPORT_NOTES) {
-      if (!USED_SUPPORT_IDS.has(item.id)) {
-        selected = item;
-        break;
-      }
-    }
-
-    if (!selected) {
-      selected = SHUFFLED_SUPPORT_NOTES[0];
-    }
-
-    USED_SUPPORT_IDS.add(selected.id);
-    return { ...selected };
-  }
-
-  let currentView = 'doubts';
-
-  function escapeHtml(str = '') {
-    return String(str).replace(/[&<>"']/g, (char) => {
-      switch (char) {
-        case '&': return '&amp;';
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '"': return '&quot;';
-        case "'": return '&#39;';
-        default: return char;
-      }
-    });
-  }
-
-  function normalizeTextPreview(text, maxLength = 120) {
-    const clean = String(text || '').replace(/\s+/g, ' ').trim();
-    if (clean.length <= maxLength) return clean;
-    return clean.slice(0, Math.max(0, maxLength - 1)).trimEnd() + '…';
-  }
-
-  function renderSupportColumn() {
-    if (!supportList) return;
-    supportList.textContent = '';
-
-    const activeItems = ACTIVE_SUPPORT_NOTES;
-
-    if (!activeItems.length) {
-      const emptyItem = document.createElement('li');
-      emptyItem.className = 'support-column__empty';
-      emptyItem.textContent = 'Care notes are on their way.';
-      supportList.appendChild(emptyItem);
-      return;
-    }
-
-    activeItems.forEach((item) => {
-      const li = document.createElement('li');
-      li.className = 'support-column__item';
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'support-item';
-      button.dataset.careId = item.id;
-      button.addEventListener('click', () => openCareNote(item));
-
-      const textSpan = document.createElement('span');
-      textSpan.className = 'support-item__text';
-      textSpan.textContent = item.text;
-      button.appendChild(textSpan);
-
-      const metaParts = [];
-      if (item.date) {
-        const parsed = new Date(item.date + 'T00:00:00');
-        if (!Number.isNaN(parsed.getTime())) {
-          metaParts.push(parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
-        }
-      }
-      if (item.attribution) {
-        metaParts.push(item.attribution);
-      }
-      if (metaParts.length) {
-        const meta = document.createElement('span');
-        meta.className = 'support-item__meta';
-        meta.textContent = metaParts.join(' • ');
-        button.appendChild(meta);
-      }
-
-      button.setAttribute('aria-label', `Open care note: ${normalizeTextPreview(item.text, 140)}`);
-      li.appendChild(button);
-      supportList.appendChild(li);
-    });
-  }
-
-  function openCareNote(item) {
-    const metaParts = [];
-    if (item.date) {
-      const parsed = new Date(item.date + 'T00:00:00');
-      if (!Number.isNaN(parsed.getTime())) {
-        metaParts.push(parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
-      }
-    }
-    if (item.attribution) {
-      metaParts.push(item.attribution);
-    }
-
-    const metaHTML = metaParts.length ? `<div class="note-meta">${escapeHtml(metaParts.join(' • '))}</div>` : '';
-    const bodyHTML = `<div class="note-text">${escapeHtml(item.text).replace(/\n/g, '<br>')}</div>`;
-
-    createNote({
-      x: innerWidth / 2,
-      y: innerHeight / 2,
-      title: 'Community Care',
-      bodyHTML,
-      metaHTML,
-      boat: null,
-      startScale: 0.72
-    });
-  }
-
-  initializeSupportPool();
-  renderSupportColumn();
-
-  function updateToggleState() {
-    if (!viewToggleButtons.length) return;
-    viewToggleButtons.forEach((btn) => {
-      const isActive = (btn.dataset.view === currentView);
-      btn.classList.toggle('is-active', isActive);
-      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-  }
-
-  function setView(view) {
-    const normalized = view === 'affirmations' ? 'affirmations' : 'doubts';
-    if (normalized === currentView) return;
-    currentView = normalized;
-    updateBoatVideoSource(normalized);
-    updateToggleState();
-    reseedBoatsForCurrentView();
-    applyViewState();
-  }
-
-  if (viewToggleButtons.length) {
-    viewToggleButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const targetView = button.dataset.view || 'doubts';
-        if (targetView === currentView) return;
-        setView(targetView);
-      });
-    });
-  }
-
-  function getCurrentVariant() {
-    return currentView === 'affirmations' ? 'cheer' : 'doubt';
-  }
-
-  function reseedBoatsForCurrentView({ highlight = false } = {}) {
-    if (!boats || !boats.length) return;
-    const variant = getCurrentVariant();
-    const now = performance.now();
-
-    boats.forEach((boat) => {
-      boat.variant = variant;
-      boat.reset(true);
-      if (highlight) {
-        boat.highlightUntil = now + 4000;
-      }
-    });
-  }
 
   /* === ADDED: preload helpers and loading UI === */
   function preloadVideo(videoEl){
@@ -1110,28 +586,26 @@ header.ripple span.figtree-adrift {
   async function preloadData(){
     try{
       // Use existing fetchers so first frame has content
-      const supportPromise = ensureSupportData(400);
       APPROVED_DOUBTS = await fetchApprovedDoubts(600);
       if (APPROVED_DOUBTS.length === 0) {
         APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
       }
       initializeDoubtPool();
       // Seed boats so render is immediate
-      boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
-      await supportPromise;
+      boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
       // Warm up counter silently
       const count = await fetchTotalDoubts().catch(()=>0);
       if (doubtCounter) {
         doubtCounter.style.visibility = 'visible';
         if (count > 0) animateDoubtCounter(doubtCounter, count);
-        else doubtCounter.textContent = '0 boats released';
+        else doubtCounter.textContent = '0 doubts released';
       }
     } catch(err){
       console.error('Data preload failed:', err);
       if (!APPROVED_DOUBTS?.length) {
         APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
         initializeDoubtPool();
-        boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
+        boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
       }
     }
   }
@@ -1219,89 +693,17 @@ async function fetchApprovedDoubts(limit = 500) {
 }
 
 async function fetchTotalDoubts() {
-  const headers = {
-    apikey: SUPABASE_ANON,
-    Authorization: `Bearer ${SUPABASE_ANON}`,
-    Accept: 'application/json',
-    Prefer: 'count=exact'
-  };
-
-  const [doubtsResult, supportResult] = await Promise.allSettled([
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&approved=is.true`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.true`, { headers })
-  ]);
-
-  const parseCount = (result) => {
-    if (result.status !== 'fulfilled') return 0;
-    const response = result.value;
-    if (!response.ok) return 0;
-    const total = parseInt(response.headers.get('Content-Range')?.split('/')[1] || '0', 10);
-    return Number.isFinite(total) ? total : 0;
-  };
-
-  return parseCount(doubtsResult) + parseCount(supportResult);
-}
-
-async function fetchSupportNotes(limit = 400) {
-  const headers = {
-    apikey: SUPABASE_ANON,
-    Authorization: `Bearer ${SUPABASE_ANON}`,
-    Accept: 'application/json'
-  };
-
-  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at,support,approved&support=is.true&approved=is.false&order=created_at.desc&limit=${limit}`;
-
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Support fetch failed (${res.status}) ${text}`);
-  }
-
-  const data = await res.json();
-  const rows = Array.isArray(data) ? data : [data];
-
-  return rows
-    .map((row, idx) => {
-      const supportFlag = typeof row?.support === 'boolean'
-        ? row.support
-        : String(row?.support ?? '').trim().toLowerCase() === 'true';
-      const approvedFlag = typeof row?.approved === 'boolean'
-        ? row.approved
-        : String(row?.approved ?? '').trim().toLowerCase() === 'true';
-
-      if (!supportFlag || approvedFlag) return null;
-
-      const text = String(row?.doubt ?? '').trim();
-      if (!text) return null;
-
-      const createdAt = row?.created_at ? String(row.created_at) : new Date().toISOString();
-
-      return {
-        id: row?.id ? String(row.id) : `care-${idx + 1}`,
-        text,
-        attribution: '',
-        date: createdAt.slice(0, 10),
-        active: true
-      };
-    })
-    .filter(Boolean)
-    .slice(0, limit);
-}
-
-async function ensureSupportData(limit = 400) {
-  if (supportFetchPromise) return supportFetchPromise;
-  supportFetchPromise = (async () => {
-    try {
-      const notes = await fetchSupportNotes(limit);
-      setSupportNotes(notes);
-      return notes;
-    } catch (err) {
-      console.error('Failed to load support notes:', err);
-      setSupportNotes([]);
-      return [];
+  const url = `${SUPABASE_URL}/rest/v1/doubts?select=count&approved=is.true`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+      Accept: 'application/json',
+      Prefer: 'count=exact'
     }
-  })();
-  return supportFetchPromise;
+  });
+  if (!res.ok) return 0;
+  return parseInt(res.headers.get('Content-Range')?.split('/')[1] || '0');
 }
 
 function animateDoubtCounter(el, targetValue) {
@@ -1309,7 +711,7 @@ function animateDoubtCounter(el, targetValue) {
   const finalValue = Math.max(0, targetValue);
   const startValue = Number(el.dataset.startValue || 0);
   const formatter = new Intl.NumberFormat();
-  const formatValue = (value) => `${formatter.format(value)} boats released`;
+  const formatValue = (value) => `${formatter.format(value)} doubt${value === 1 ? '' : 's'} released`;
 
   if (finalValue <= startValue) {
     el.textContent = formatValue(finalValue);
@@ -1359,11 +761,6 @@ function animateDoubtCounter(el, targetValue) {
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d', { alpha:true });
   const boatVideo = document.getElementById('boatVideo');
-  const BOAT_VIDEO_SOURCES = {
-    doubts: 'boat.mp4',
-    affirmations: 'boat-cheers.mp4'
-  };
-  let activeBoatVideoSrc = boatVideo?.getAttribute('src') || BOAT_VIDEO_SOURCES.doubts;
   const bgAudio = document.getElementById('bgAudio');
   const soundToggle = document.getElementById('soundToggle');
   const releaseBtn = document.getElementById('releaseBtn');
@@ -1382,36 +779,6 @@ function animateDoubtCounter(el, targetValue) {
   addEventListener('resize', resize);
   resize();
 
-  function applyViewState() {
-    const showingCheers = currentView === 'affirmations';
-
-    if (canvas) {
-      canvas.classList.remove('is-hidden');
-      canvas.setAttribute('aria-hidden', 'false');
-    }
-
-    if (hintEl) {
-      hintEl.classList.remove('is-hidden');
-      hintEl.textContent = showingCheers ? 'Click boat to unfold a care note' : 'Click boat to unfold a doubt';
-    }
-
-    if (supportColumn) {
-      supportColumn.hidden = true;
-      supportColumn.setAttribute('aria-hidden', 'true');
-    }
-
-    document.body.classList.toggle('cheers-view', showingCheers);
-
-    if (releaseBtn) {
-      const label = showingCheers ? 'Release a care note' : 'Release your doubt';
-      releaseBtn.textContent = label;
-      releaseBtn.setAttribute('aria-label', label);
-    }
-  }
-
-  updateToggleState();
-  applyViewState();
-
   /* ====== Media autoplay ====== */
 const DEFAULT_VOL = 0.28;
 function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
@@ -1420,76 +787,43 @@ function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundT
 let videoReady = false;
 let videoRestartAttempts = 0;
 const MAX_RESTART_ATTEMPTS = 2;
-let videoReadyCheckTimeoutId = null;
 
-boatVideo.addEventListener('canplay', () => {
-  videoReady = true;
-  if (videoReadyCheckTimeoutId) {
-    clearTimeout(videoReadyCheckTimeoutId);
-    videoReadyCheckTimeoutId = null;
-  }
-  if (boatVideo.paused) {
-    boatVideo.play().catch(() => {});
-  }
-});
+boatVideo.addEventListener('canplay', () => { 
+  videoReady = true; 
+  if(boatVideo.paused) boatVideo.play().catch(() => {}); 
+}, {once: true});
 
 function checkAndRestartVideo() {
   if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
     console.warn(`Video not ready after timeout, attempting restart ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
     videoRestartAttempts++;
-
+    
     const currentSrc = boatVideo.src;
     boatVideo.src = '';
     boatVideo.load();
     boatVideo.src = currentSrc + '?t=' + Date.now();
-
+    
     setTimeout(() => {
       boatVideo.play().catch(() => {
         console.error('Video restart failed');
       });
     }, 500);
-
+    
     if (videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
       setTimeout(checkAndRestartVideo, 8000);
     }
   }
 }
 
-function scheduleVideoReadyCheck() {
-  if (videoReadyCheckTimeoutId) {
-    clearTimeout(videoReadyCheckTimeoutId);
-  }
-  videoReadyCheckTimeoutId = setTimeout(() => {
-    if (!videoReady) {
-      checkAndRestartVideo();
-    }
-  }, 15000);
-}
-
-function updateBoatVideoSource(view) {
-  if (!boatVideo) return;
-  const desiredSrc = BOAT_VIDEO_SOURCES[view] || BOAT_VIDEO_SOURCES.doubts;
-  if (activeBoatVideoSrc === desiredSrc) return;
-
-  activeBoatVideoSrc = desiredSrc;
-  videoReady = false;
-  videoRestartAttempts = 0;
-
-  if (videoReadyCheckTimeoutId) {
-    clearTimeout(videoReadyCheckTimeoutId);
-    videoReadyCheckTimeoutId = null;
-  }
-
-  boatVideo.pause();
-  boatVideo.src = desiredSrc;
-  boatVideo.load();
-  boatVideo.play().catch(() => {});
-  scheduleVideoReadyCheck();
-}
-
 // Start immediately, don't wait
 boatVideo.play().catch(() => {});
-scheduleVideoReadyCheck();
+
+// Monitor for failures
+setTimeout(() => {
+  if (!videoReady) {
+    checkAndRestartVideo();
+  }
+}, 15000);
 
 /* ==== CHANGED: don’t start audio when clicking Enter ==== */
 let audioStarted = false;
@@ -1616,10 +950,7 @@ function pickRandomDoubt() {
 
 
   class Boat{
-    constructor(variant = 'doubt'){
-      this.variant = variant;
-      this.reset(true);
-    }
+    constructor(){ this.reset(true); }
     reset(initial = false) {
       // Use canvas dimensions directly (no DPR scaling)
       this.yBase = Math.random() * H * 0.75 + H * 0.1;
@@ -1630,10 +961,10 @@ function pickRandomDoubt() {
 
       this.phase = Math.random() * Math.PI * 2;
       this.alpha = 0.95;
-
-      const baseEntry = this.variant === 'cheer' ? pickRandomCareNote() : pickRandomDoubt();
-      this.entry = { ...baseEntry, type: this.variant };
-
+      
+      // Get a fresh doubt when resetting (now guaranteed unique per session)
+      this.doubt = pickRandomDoubt();
+      
       this._h = BOAT_HEIGHT;
       this._w = BOAT_HEIGHT * 1.8;
       this.vx = 0;
@@ -1726,16 +1057,10 @@ function pickRandomDoubt() {
 
       // FIXED: iOS-compatible blend mode rendering
       ctx.globalAlpha = a;
-
-      const supportsFilter = typeof ctx.filter !== 'undefined';
-      const prevFilter = supportsFilter ? ctx.filter : null;
-      if (supportsFilter) {
-        ctx.filter = this.variant === 'cheer' ? 'hue-rotate(68deg)' : 'none';
-      }
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
+      
       if(isIOS) {
         const dpr = window.devicePixelRatio || 1;
         const offCanvas = document.createElement('canvas');
@@ -1753,11 +1078,7 @@ function pickRandomDoubt() {
         ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
         ctx.globalCompositeOperation = prev;
       }
-
-      if (supportsFilter) {
-        ctx.filter = prevFilter;
-      }
-
+      
       ctx.restore();
     }
     hit(mx,my){ 
@@ -1911,44 +1232,24 @@ function pickRandomDoubt() {
   function openNoteFromBoat(boat){
     boat.morphingIn = true;
     boat.morphT0 = performance.now();
-    const entry = boat.entry || {};
-    const variant = boat.variant || entry.type || 'doubt';
-
-    const metaParts = [];
-    if (entry.date) {
-      const parsed = new Date(entry.date + 'T00:00:00');
-      if (!Number.isNaN(parsed.getTime())) {
-        metaParts.push(parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
-      }
-    }
-    if (variant === 'cheer' && entry.attribution) {
-      metaParts.push(entry.attribution);
-    }
-
-    const meta = metaParts.length ? `<div class="note-meta">${escapeHtml(metaParts.join(' • '))}</div>` : '';
-    const body = `<div class="note-text">${escapeHtml(entry.text || '').replace(/\n/g, '<br>')}</div>`;
-
-    const noteTitle = variant === 'cheer' ? 'Community Care' : 'Anonymous Doubt';
+    const meta = `<div class="note-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>`;
+    const body = `<div class="note-text">${boat.doubt.text}</div>`;
     const maxSize = Math.min(350, window.innerWidth * 0.9);
-
+    
     // Center notes on mobile devices (640px and below)
     const isMobile = window.innerWidth <= 640;
     const noteX = isMobile ? innerWidth / 2 : boat.x;
     const noteY = isMobile ? innerHeight / 2 : boat.y;
-
-    createNote({ x:noteX, y:noteY, title:noteTitle, bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
+    
+    createNote({ x:noteX, y:noteY, title:'Anonymous Doubt', bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
   }
 
   /* CTA → composer note */
   function openComposerNote() {
     composerOpen = true;
 
-    const isCheersView = currentView === 'affirmations';
-    const noteTitle = isCheersView ? 'Release a care note' : 'Release your doubt';
-    const placeholderText = isCheersView ? 'Type your care note (200 characters max)' : 'Type your doubt (200 characters max)';
-
     const body = `
-      <textarea class="compose-field" id="releaseInput" maxlength="200" placeholder="${placeholderText}"></textarea>
+      <textarea class="compose-field" id="doubtInput" maxlength="200" placeholder="Type your doubt (200 characters max)"></textarea>
       <div class="compose-foot">
         <div><span id="charCount">0</span>/200</div>
         <button class="pill-btn" id="submitDoubt" type="button">Release</button>
@@ -1959,14 +1260,14 @@ function pickRandomDoubt() {
     createNote({
       x: innerWidth / 2,
       y: innerHeight / 2,
-      title: noteTitle,
+      title: 'Release your doubt',
       bodyHTML: body,
       metaHTML: '',
       boat: null,
       startScale: 0.72
     });
 
-    const input = document.getElementById('releaseInput');
+    const input = document.getElementById('doubtInput');
     const count = document.getElementById('charCount');
     const submit = document.getElementById('submitDoubt');
 
@@ -1985,26 +1286,15 @@ function pickRandomDoubt() {
       submit.disabled = true;
       const prev = submit.textContent;
       submit.textContent = 'Releasing…';
-      const variant = getCurrentVariant();
 
       try {
         const { id, created_at, doubt } = await postDoubtToN8N(text);
-        const b = new Boat(variant);
-        b.entry = {
+        const b = new Boat();
+        b.doubt = {
           text: doubt,
           date: (created_at || new Date().toISOString()).slice(0, 10),
-          id,
-          type: variant
+          id
         };
-        if (variant === 'cheer') {
-          const careEntry = {
-            ...b.entry,
-            attribution: b.entry.attribution || 'Shared from the drift',
-            active: true
-          };
-          b.entry = careEntry;
-          setSupportNotes([...SUPPORT_NOTES, careEntry]);
-        }
         b.x = innerWidth / 2;
         b.yBase = innerHeight / 2;
         b.phase = 0;
@@ -2013,8 +1303,7 @@ function pickRandomDoubt() {
         closeNote();
       } catch (err) {
         console.error('Release failed:', err);
-        const friendlyType = variant === 'cheer' ? 'care note' : 'doubt';
-        alert(err.message || `Failed to release your ${friendlyType}.`);
+        alert(err.message || 'Failed to release your doubt.');
       } finally {
         submit.disabled = false;
         submit.textContent = prev;
@@ -2087,27 +1376,25 @@ function pickRandomDoubt() {
      Boot flow
      ========= */
   (async function init(){
-    const supportPromise = ensureSupportData(400);
-    try{
-      APPROVED_DOUBTS = await fetchApprovedDoubts(600);
-      if (APPROVED_DOUBTS.length === 0) {
-        console.warn('No approved doubts found; using placeholder.');
-        APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
-      }
-
-      // Initialize the shuffled pool after loading doubts
-      initializeDoubtPool();
-
-    } catch(err){
-      console.error(err);
-      // Soft fallback if Supabase is unreachable
-      APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
-      initializeDoubtPool();
-    } finally {
-      await supportPromise.catch(() => {});
-      // Seed boats only after we have something to show
-      boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
-    }
+try{
+  APPROVED_DOUBTS = await fetchApprovedDoubts(600);
+  if (APPROVED_DOUBTS.length === 0) {
+    console.warn('No approved doubts found; using placeholder.');
+    APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
+  }
+  
+  // Initialize the shuffled pool after loading doubts
+  initializeDoubtPool();
+  
+} catch(err){
+  console.error(err);
+  // Soft fallback if Supabase is unreachable
+  APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
+  initializeDoubtPool();
+} finally {
+  // Seed boats only after we have something to show
+  boats = Array.from({length: BOAT_COUNT}, ()=> new Boat());
+}
 
 // Update counter on load
 fetchTotalDoubts().then(count => {
@@ -2116,7 +1403,7 @@ fetchTotalDoubts().then(count => {
   if (count > 0) {
     animateDoubtCounter(doubtCounter, count);
   } else {
-    doubtCounter.textContent = '0 boats released';
+    doubtCounter.textContent = '0 doubts released';
   }
 }).catch(() => {
   if (doubtCounter) doubtCounter.style.visibility = 'hidden';
