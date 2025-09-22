@@ -91,7 +91,7 @@
 
   #doubt-counter {
     font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
-    font-size: 13px;
+    font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(236, 236, 237, 0.6);
@@ -1392,7 +1392,7 @@ function animateDoubtCounter(el, targetValue) {
 
     if (hintEl) {
       hintEl.classList.remove('is-hidden');
-      hintEl.textContent = showingCheers ? 'Click boat to unfold a care note' : 'Click boat to unfold a doubt';
+      hintEl.textContent = showingCheers ? 'Click boat to unfold a care' : 'Click boat to unfold a doubt';
     }
 
     if (supportColumn) {
@@ -1403,7 +1403,7 @@ function animateDoubtCounter(el, targetValue) {
     document.body.classList.toggle('cheers-view', showingCheers);
 
     if (releaseBtn) {
-      const label = showingCheers ? 'Release a care note' : 'Release your doubt';
+      const label = showingCheers ? 'Release a care note' : 'Release a doubt';
       releaseBtn.textContent = label;
       releaseBtn.setAttribute('aria-label', label);
     }
