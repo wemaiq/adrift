@@ -1210,8 +1210,32 @@ header.ripple span.figtree-adrift {
   const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
-async function fetchApprovedDoubts(limit = 500) {
-  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&approved=is.true&order=created_at.desc&limit=${limit}`;
+async function fetchApprovedDoubts(limit = 600) {
+  // Fetch ALL doubt IDs first
+  const idsUrl = `${SUPABASE_URL}/rest/v1/doubts?select=id&approved=is.true`;
+  const idsRes = await fetch(idsUrl, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+      Accept: 'application/json'
+    }
+  });
+  
+  if (!idsRes.ok) {
+    throw new Error(`IDs fetch failed (${idsRes.status})`);
+  }
+  
+  const allIds = await idsRes.json();
+  console.log('Total doubts available:', allIds.length);
+  
+  // Randomly shuffle ALL IDs
+  const shuffledIds = allIds.sort(() => Math.random() - 0.5);
+  
+  // Take the first 600 from the shuffled list
+  const selectedIds = shuffledIds.slice(0, limit).map(item => item.id);
+  
+  // Fetch the full data for these specific IDs
+  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&id=in.(${selectedIds.join(',')})`;
   const res = await fetch(url, {
     headers: {
       apikey: SUPABASE_ANON,
@@ -1219,11 +1243,15 @@ async function fetchApprovedDoubts(limit = 500) {
       Accept: 'application/json'
     }
   });
+  
   if (!res.ok) {
     const text = await res.text().catch(()=> '');
     throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
   }
+  
   const rows = await res.json();
+  console.log('Sample of dates after random selection:', rows.slice(0, 5).map(r => r.created_at));
+  
   return rows.map(r => ({
     id: r.id,
     text: r.doubt ?? '',
