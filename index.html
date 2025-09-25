@@ -1667,7 +1667,7 @@ function pickRandomDoubt() {
 
       // ENTRY: start fully off-screen to the left (by half-width + 2px)
       const approxW = this._w || (BOAT_HEIGHT * 1.8);
-      this.x = initial ? Math.random() * W : -(approxW * 0.5) - 2;
+      this.x = initial ? Math.random() * W : -(approxW * 0.5);
 
       this.phase = Math.random() * Math.PI * 2;
       this.alpha = 0.95;
