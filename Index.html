@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>adrift</title>
+<style>
+  html, body { height:100%; }
+  body { margin:0; background:#000; overflow:hidden; font-family: ui-sans-serif, system-ui; color:#ececed; }
+  canvas { display:block; width:100%; height:100%; }
+  header{ position:fixed; inset:18px auto auto 22px; letter-spacing:.08em; text-transform:uppercase; font-size:12px; color:#888; user-select:none; z-index:5; }
+  .hint{ position:fixed; right:20px; bottom:16px; color:#9aa0a8; font-size:12px; opacity:.7; user-select:none; background: rgba(255,255,255,.03); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.06); backdrop-filter: blur(3px); z-index:5; }
+
+  /* Sound toggle matches hint styling, bottom-left */
+  .sound-toggle{
+    position:fixed; left:20px; bottom:16px; z-index:5;
+    background: rgba(255,255,255,.03);
+    color:#9aa0a8; font-size:12px; line-height:1;
+    padding:8px 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(3px);
+    cursor:pointer; user-select:none;
+  }
+  .sound-toggle.active{ color:#ececed; border-color: rgba(255,255,255,.12); }
+  .sound-toggle:focus-visible{ outline:2px solid rgba(255,255,255,.22); outline-offset:2px; }
+
+  /* Center-bottom CTA (translucent gradient pill) */
+  .cta-btn{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:5;
+    padding:16px 20px; border-radius:9999px; font-size:14px; line-height:1; color:#fff;
+    border:1px solid rgba(255,255,255,.28);
+    background: rgba(255,255,255,.04);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+    transition: box-shadow .25s ease, transform .2s ease, border-color .25s ease, background .25s ease;
+    cursor:pointer; user-select:none;
+  }
+  .cta-btn:hover{ box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 24px 6px rgba(255,220,90,.12), 0 0 1px 0 rgba(255,255,255,.35); border-color: rgba(255,255,255,.34); }
+  .cta-btn:focus-visible{ outline:2px solid rgba(255,255,255,.28); outline-offset:3px; }
+
+  /* hidden media elements; only drawn/played */
+  #boatVideo, #bgAudio { position: fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+  /* ===== Unfolding paper overlay (HTML/CSS) ===== */
+  .paper-overlay { position: fixed; inset:0; z-index:20; pointer-events:auto; }
+  .overlay-close { position:fixed; inset:0; z-index:0; pointer-events:auto; background: transparent; }
+  .paper { position:absolute; z-index:1;
+    width: 360px; height: 240px;
+    transform-style: preserve-3d; perspective: 1200px;
+    pointer-events:auto;
+    filter: drop-shadow(0 12px 40px rgba(0,0,0,.55));
+    transition: transform .35s ease;
+  }
+  .sheet {
+    position:absolute; inset:0;
+    background: radial-gradient(120% 120% at 10% 10%, #ffffff, #e9ecf2 55%, #dbe2ee 100%);
+    border-radius: 8px; border: 1px solid rgba(0,0,0,.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), inset 0 28px 80px rgba(0,0,0,.08);
+    backface-visibility: hidden; overflow:hidden;
+  }
+  .sheet::after{ content:""; position:absolute; inset:0; box-shadow: inset 0 0 60px rgba(0,0,0,.22), inset 0 0 2px rgba(0,0,0,.25); border-radius:8px; pointer-events:none; }
+
+  .fold { position:absolute; background: inherit; border: inherit; box-shadow: inherit; backface-visibility:hidden; }
+  .fold-left  { left:0; top:0; width:50%; height:100%; transform-origin: left center;  border-top-left-radius:8px;  border-bottom-left-radius:8px; }
+  .fold-right { right:0; top:0; width:50%; height:100%; transform-origin: right center; border-top-right-radius:8px; border-bottom-right-radius:8px; }
+  .fold-top   { left:0; top:0; width:100%; height:50%; transform-origin: center top;    border-top-left-radius:8px;  border-top-right-radius:8px; }
+  .fold-bot   { left:0; bottom:0; width:100%; height:50%; transform-origin: center bottom; border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
+
+  @keyframes unfold-left  { from { transform: rotateY(-180deg); } to { transform: rotateY(0deg); } }
+  @keyframes unfold-right { from { transform: rotateY( 180deg); } to { transform: rotateY(0deg); } }
+  @keyframes unfold-top   { from { transform: rotateX( 180deg); } to { transform: rotateX(0deg); } }
+  @keyframes unfold-bot   { from { transform: rotateX(-180deg); } to { transform: rotateX(0deg); } }
+
+  @keyframes refold-left  { from { transform: rotateY(0deg); } to { transform: rotateY(-180deg); } }
+  @keyframes refold-right { from { transform: rotateY(0deg); } to { transform: rotateY( 180deg); } }
+  @keyframes refold-top   { from { transform: rotateX(0deg); } to { transform: rotateX( 180deg); } }
+  @keyframes refold-bot   { from { transform: rotateX(0deg); } to { transform: rotateX(-180deg); } }
+
+  .paper-content { position:absolute; inset:18px 20px; opacity:0; transform: translateY(4px); transition: opacity .35s ease .40s, transform .45s ease .40s; color:#0e1520; }
+  .paper.unfold .paper-content { opacity:1; transform: translateY(0); }
+
+  .paper-title { font-size: 11px; letter-spacing:.12em; text-transform:uppercase; color:#4c5562; margin-bottom:10px; }
+  .paper-text  { font-size: 20px; line-height: 1.6; color:#10151c; }
+  .paper-meta  { margin-top: 14px; font-size: 12px; color:#5a6472; }
+
+  /* Composer */
+  .compose-field{ width:100%; min-height:110px; resize:vertical; box-sizing:border-box; border-radius:8px; border:1px solid rgba(0,0,0,.1); padding:10px 12px; font: 16px/1.5 ui-sans-serif, system-ui; color:#0e1520; background: #fff; }
+  .compose-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:12px; color:#4c5562; }
+  .pill-btn{ padding:8px 12px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#0f172a; color:#fff; cursor:pointer; }
+  .close-x{ position:absolute; right:8px; top:8px; width:28px; height:28px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#fff; color:#111; font-weight:700; display:grid; place-items:center; cursor:pointer; }
+</style>
+</head>
+<body>
+  <header>adrift</header>
+  <video id="boatVideo" src="boat.mp4" loop muted playsinline preload="auto"></video>
+  <audio id="bgAudio" src="sound.wav" loop preload="auto"></audio>
+
+  <canvas id="canvas"></canvas>
+  <div class="hint">Click a boat to morph + unfold · click outside to refold</div>
+  <button id="soundToggle" class="sound-toggle" aria-pressed="false" aria-label="Enable sound">Sound: Off</button>
+  <button id="releaseBtn" class="cta-btn" aria-label="Release your doubt">Release your doubt</button>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { alpha:true });
+  const boatVideo = document.getElementById('boatVideo');
+  const bgAudio = document.getElementById('bgAudio');
+  const soundToggle = document.getElementById('soundToggle');
+  const releaseBtn = document.getElementById('releaseBtn');
+
+  let W,H; function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; } addEventListener('resize',resize); resize();
+
+  // ====== Media autoplay helpers ======
+  const DEFAULT_VOL = 0.28;
+  function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
+  function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
+
+  // Video autoplay
+  let videoReady=false; boatVideo.addEventListener('canplay', ()=>{ videoReady=true; if(boatVideo.paused) boatVideo.play().catch(()=>{}); }, {once:true});
+
+  // Kick both on first interaction (required by browsers)
+  const ensurePlay = ()=>{ boatVideo.play().catch(()=>{}); startAudio(); };
+  addEventListener('pointerdown', ensurePlay, {once:true}); addEventListener('keydown', ensurePlay, {once:true});
+
+  // Sound toggle
+  soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAudio.paused){ bgAudio.play().catch(()=>{}); } });
+
+  // Params
+  const CROP = {x:0, y:0, w:1, h:1};
+  const BOAT_COUNT=10, BOAT_HEIGHT=160;
+  const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
+  const MORPH_IN_MS = 420; const MORPH_OUT_MS = 320;
+
+  // --- gentle, invisible separation ---
+  const COLLISION_PAD = 15; const PUSH_STRENGTH = 0.02; const FRICTION = 0.34;
+
+  const doubts = [
+    { text: "What if I've misread the work I'm meant to do?", date: "2025-08-11" },
+    { text: "Am I mistaking activity for meaning?", date: "2025-06-19" },
+    { text: "Will the people I love still recognize me if I change?", date: "2025-08-03" },
+    { text: "What if the quiet isn't rest but avoidance?", date: "2025-05-28" },
+    { text: "Could doubt be a compass and not a wall?", date: "2025-01-09" }
+  ];
+
+  class Boat{
+    constructor(){ this.reset(true); }
+    reset(initial=false){
+      this.yBase = Math.random()*H*0.75 + H*0.1;
+      this.x = initial ? Math.random()*W : -(this._w||160)-30;
+      this.phase = Math.random()*Math.PI*2;
+      this.alpha = 0.95;
+      this.doubt = doubts[Math.floor(Math.random()*doubts.length)];
+      this._h = BOAT_HEIGHT; this._w = BOAT_HEIGHT*1.8;
+
+      // subtle steering state
+      this.vx = 0; this.vy = 0;
+
+      // new-boat spotlight window
+      this.highlightUntil = 0;
+
+      this.paused = false; this.morphingIn = false; this.morphingOut = false; this.morphT0 = 0;
+    }
+    update(t, boats){
+      const canMove = !(this.paused || this.morphingIn || this.morphingOut);
+      if(canMove){ this.x += SPEED_X + this.vx; if(this.x > W + (this._w||160)) this.reset(false); }
+
+      const bob = Math.sin(this.phase + t*BOB_FREQ) * BOB_AMPL; this.y = this.yBase + bob + this.vy;
+
+      const w = this._w || (BOAT_HEIGHT*1.8); const h = this._h || BOAT_HEIGHT;
+
+      for(const other of boats){
+        if(other === this) continue;
+        const ow = other._w || (BOAT_HEIGHT*1.8);
+        const oh = other._h || BOAT_HEIGHT;
+        const halfW = w*0.5 + COLLISION_PAD; const halfH = h*0.5 + COLLISION_PAD;
+        const otherHalfW = ow*0.5 + COLLISION_PAD; const otherHalfH = oh*0.5 + COLLISION_PAD;
+        const dx = this.x - other.x; const dy = this.y - other.y;
+        const overlapX = (halfW + otherHalfW) - Math.abs(dx); const overlapY = (halfH + otherHalfH) - Math.abs(dy);
+        if(overlapX > 0 && overlapY > 0){
+          if(overlapX < overlapY){ const dirX = Math.sign(dx) || (Math.random()<0.5 ? 1 : -1); this.vx += dirX * overlapX * PUSH_STRENGTH; }
+          else { const dirY = Math.sign(dy) || (Math.random()<0.5 ? 1 : -1); this.vy += dirY * overlapY * PUSH_STRENGTH; }
+        }
+      }
+
+      this.vx *= FRICTION; this.vy *= FRICTION;
+    }
+    draw(now){
+      if(!videoReady) return;
+
+      const vW=boatVideo.videoWidth||640, vH=boatVideo.videoHeight||360;
+      const srcW=vW*CROP.w, srcH=vH*CROP.h, srcX=vW*CROP.x, srcY=vH*CROP.y;
+      const displayH=BOAT_HEIGHT, displayW=displayH*(srcW/srcH);
+      this._w=displayW; this._h=displayH;
+
+      let a = this.alpha;
+      if(this.morphingIn){ const p = Math.min(1, (now - this.morphT0)/MORPH_IN_MS); a = this.alpha * (1 - p); if(p >= 1){ this.morphingIn = false; this.paused = true; } }
+      else if(this.morphingOut){ const p = Math.min(1, (now - this.morphT0)/MORPH_OUT_MS); a = this.alpha * (p); if(p >= 1){ this.morphingOut = false; this.paused = false; } }
+
+      ctx.save();
+      ctx.translate(this.x, this.y);
+
+      // glow spotlight with gradual fade
+      if(this.highlightUntil){
+        const remaining = this.highlightUntil - performance.now();
+        if(remaining > 0){
+          const duration = 6000; // total fade time in ms
+          const t = Math.max(0, remaining / duration);
+          const fade = 1 - (1 - t) * (1 - t); // easeOutQuad
+          ctx.save();
+          ctx.globalAlpha = fade;
+          const g = ctx.createRadialGradient(0,0,10, 0,0,220);
+          g.addColorStop(0,'rgba(255,240,160,.35)');
+          g.addColorStop(0.35,'rgba(255,210,100,.18)');
+          g.addColorStop(1,'rgba(255,210,100,0)');
+          ctx.globalCompositeOperation='screen';
+          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,220,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      ctx.globalAlpha = a;
+      const prev = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
+      ctx.globalCompositeOperation = prev;
+      ctx.restore();
+    }
+    hit(mx,my){ return mx>=this.x-this._w/2 && mx<=this.x+this._w/2 && my>=this.y-this._h/2 && my<=this.y+this._h/2; }
+  }
+
+  const boats = Array.from({length:BOAT_COUNT}, ()=>new Boat());
+
+  // ===== Paper overlay control (boats) =====
+  let overlayEl=null, paperEl=null, openBoat=null, composerOpen=false;
+
+  function attachCloseX(){
+    const x = document.createElement('button');
+    x.className='close-x';
+    x.setAttribute('aria-label','Close');
+    x.textContent='×';
+    x.addEventListener('click', ()=> composerOpen ? closeComposer() : closePaper());
+    paperEl.appendChild(x);
+  }
+
+  function createPaperAt(boat){
+    const paperW=360, paperH=240;
+
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'paper-overlay'; // no blur for boat view
+    overlayEl.innerHTML = `<div class="overlay-close"></div>`;
+    document.body.appendChild(overlayEl);
+
+    paperEl = document.createElement('div');
+    paperEl.className = 'paper';
+    paperEl.style.left = (boat.x - paperW/2) + 'px';
+    paperEl.style.top  = (boat.y - paperH/2) + 'px';
+    paperEl.style.width  = paperW + 'px';
+    paperEl.style.height = paperH + 'px';
+
+    const scaleFrom = (boat._h / paperH) * 0.9;
+    paperEl.style.transformOrigin = 'center center';
+    paperEl.style.transform = `scale(${scaleFrom}) translateZ(0)`;
+
+    overlayEl.appendChild(paperEl);
+
+    const sheet = document.createElement('div'); sheet.className='sheet';
+    const left  = document.createElement('div'); left.className ='fold fold-left';
+    const right = document.createElement('div'); right.className='fold fold-right';
+    const top   = document.createElement('div'); top.className  ='fold fold-top';
+    const bot   = document.createElement('div'); bot.className  ='fold fold-bot';
+    paperEl.append(sheet,left,right,top,bot);
+
+    const content = document.createElement('div'); content.className='paper-content';
+    content.innerHTML = `
+      <div class="paper-title">Anonymous Doubt</div>
+      <div class="paper-text">${boat.doubt.text}</div>
+      <div class="paper-meta">${new Date(boat.doubt.date+'T00:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</div>
+    `;
+    paperEl.appendChild(content);
+
+    attachCloseX();
+
+    openBoat = boat;
+    requestAnimationFrame(()=>{
+      paperEl.style.transform = 'scale(1) translateZ(0)';
+      setTimeout(()=> paperEl.classList.add('unfold'), 140);
+    });
+
+    overlayEl.querySelector('.overlay-close').addEventListener('click', closePaper, {once:true});
+  }
+
+  function openPaper(boat){ boat.morphingIn = true; boat.morphT0 = performance.now(); createPaperAt(boat); }
+
+  function closePaper(){
+    if(!paperEl) return;
+    paperEl.classList.remove('unfold');
+    paperEl.classList.add('refold');
+    setTimeout(()=>{
+      overlayEl?.remove(); overlayEl=null; paperEl=null;
+      if(openBoat){ openBoat.morphingOut = true; openBoat.morphT0 = performance.now(); openBoat = null; }
+    }, 380);
+  }
+
+  // ===== Composer (CTA flow, no blur) =====
+  function openComposer(){
+    const paperW=360, paperH=260;
+
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'paper-overlay';
+    overlayEl.innerHTML = `<div class="overlay-close"></div>`;
+    document.body.appendChild(overlayEl);
+
+    paperEl = document.createElement('div');
+    paperEl.className = 'paper';
+    paperEl.style.left = (W/2 - paperW/2) + 'px';
+    paperEl.style.top  = (H/2 - paperH/2) + 'px';
+    paperEl.style.width  = paperW + 'px';
+    paperEl.style.height = paperH + 'px';
+    paperEl.style.transformOrigin = 'center center';
+    paperEl.style.transform = `scale(.72) translateZ(0)`; // subtle grow-in
+    overlayEl.appendChild(paperEl);
+
+    const sheet = document.createElement('div'); sheet.className='sheet';
+    const left  = document.createElement('div'); left.className ='fold fold-left';
+    const right = document.createElement('div'); right.className='fold fold-right';
+    const top   = document.createElement('div'); top.className  ='fold fold-top';
+    const bot   = document.createElement('div'); bot.className  ='fold fold-bot';
+    paperEl.append(sheet,left,right,top,bot);
+
+    const content = document.createElement('div'); content.className='paper-content';
+    content.innerHTML = `
+      <div class="paper-title">Release your doubt</div>
+      <textarea class="compose-field" id="doubtInput" maxlength="200" placeholder="Type your doubt (200 characters max)"></textarea>
+      <div class="compose-foot">
+        <div><span id="charCount">0</span>/200</div>
+        <button class="pill-btn" id="submitDoubt">Release</button>
+      </div>
+    `;
+    paperEl.appendChild(content);
+
+    attachCloseX();
+
+    composerOpen = true;
+    requestAnimationFrame(()=>{
+      paperEl.style.transform = 'scale(1) translateZ(0)';
+      setTimeout(()=> paperEl.classList.add('unfold'), 140);
+    });
+
+    // outside click closes composer
+    overlayEl.querySelector('.overlay-close').addEventListener('click', closeComposer, {once:true});
+
+    const input = content.querySelector('#doubtInput');
+    const count = content.querySelector('#charCount');
+    input.addEventListener('input', ()=>{ count.textContent = input.value.length; });
+    content.querySelector('#submitDoubt').addEventListener('click', ()=>{
+      const text = input.value.trim();
+      if(!text) { input.focus(); return; }
+      // add brand-new boat centered with smooth glow; keep others
+      const b = new Boat();
+      b.doubt = { text, date: new Date().toISOString().slice(0,10) };
+      b.x = W/2; b.yBase = H/2; b.phase = 0; b.highlightUntil = performance.now()+6000; // 6s window
+      boats.push(b);
+      closeComposer();
+    });
+  }
+
+  function closeComposer(){
+    if(!paperEl) return;
+    paperEl.classList.remove('unfold');
+    paperEl.classList.add('refold');
+    setTimeout(()=>{ overlayEl?.remove(); overlayEl=null; paperEl=null; composerOpen=false; }, 380);
+  }
+
+  // ===== Loop =====
+  function animate(now=0){ ctx.clearRect(0,0,W,H); for(const b of boats){ b.update(now, boats); b.draw(now); } requestAnimationFrame(animate); }
+  animate();
+
+  // Click → morph + unfold (boats)
+  canvas.addEventListener('click', e=>{
+    if(composerOpen) return; // disable boat clicks while composer open
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for(const b of boats){ if(b.hit(mx,my)){ if(b.morphingIn || b.paused) return; openPaper(b); break; } }
+  });
+
+  // CTA → composer
+  releaseBtn.addEventListener('click', openComposer);
+
+  // Esc → close current overlay
+  addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(composerOpen) closeComposer(); else closePaper(); } });
+</script>
+</body>
+</html>
