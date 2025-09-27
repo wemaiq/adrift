@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Adrift</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dongle&display=swap" rel="stylesheet">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="favicon-adrift-16x16.svg">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="favicon-adrift-32x32.svg">
+    <link rel="shortcut icon" href="favicon-adrift-32x32.svg" type="image/svg+xml">
+
+    <style>
+        :root {
+            --paper-edge: #e8e3da;
+            --paper-face: #e8e3da;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+            color: #ececed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        .container {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 10;
+        }
+
+        header {
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            font-size: 20px;
+            font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+            text-transform: uppercase;
+            user-select: none;
+            margin-bottom: 40px;
+        }
+
+        .boat-container {
+            position: relative;
+            width: 200px;
+            height: 140px;
+            margin: 0 0 20px 0;
+        }
+
+        .boat {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 140px;
+            filter: drop-shadow(0 12px 40px rgba(0,0,0,0.55));
+        }
+
+        .boat video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            mix-blend-mode: screen;
+        }
+
+        .message {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(249, 249, 249, 0.85);
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+        }
+
+        .home-link {
+            font-size: 14px;
+            color: rgba(236, 236, 237, 0.75);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .home-link:hover {
+            color: #fff;
+        }
+
+        .home-link a {
+            color: #fff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            transition: border-color 0.3s ease;
+        }
+
+        .home-link a:hover {
+            border-bottom-color: #fff;
+        }
+
+            /* Mobile responsive */
+            @media (max-width: 640px) {
+                .boat-container {
+                width: 160px;
+                height: 112px;
+                margin: 0 0 5px 0;
+            }
+
+            .boat {
+                width: 160px;
+                height: 112px;
+            }
+
+            .message {
+                font-size: 16px;
+                margin-bottom: 15px;
+                padding: 0 20px;
+            }
+
+            .home-link {
+                font-size: 14px;
+                padding: 0 20px;
+            }
+        }
+
+            /* Landscape mobile */
+            @media (max-height: 500px) and (orientation: landscape) {
+                .container {
+                width: 140px;
+                height: 98px;
+                margin: 10px 0 15px 0;
+            }
+
+            .boat {
+                width: 140px;
+                height: 98px;
+            }
+
+            .message {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .home-link {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="boat-container">
+            <div class="boat">
+                <video id="boatVideo" autoplay loop muted playsinline preload="auto">
+                    <source src="boat.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+        
+        <div class="message">Looks like this page is lost at sea</div>
+        
+        <div class="home-link">Click here to return <a href="https://adrift.site/">home</a></div>
+    </div>
+
+    <script>
+        // Ensure video plays on all devices
+        const video = document.getElementById('boatVideo');
+        
+        video.addEventListener('canplay', () => {
+            video.play().catch(() => {
+                // Fallback if autoplay fails
+                console.log('Video autoplay failed, but video is ready');
+            });
+        });
+
+        // Handle user interaction for devices that block autoplay
+        document.addEventListener('click', () => {
+            if (video.paused) {
+                video.play().catch(() => {});
+            }
+        }, { once: true });
+
+        // Ensure video continues playing when page becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && video.paused) {
+                video.play().catch(() => {});
+            }
+        });
+    </script>
+</body>
+</html>
