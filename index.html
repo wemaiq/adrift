@@ -9,6 +9,8 @@
 
   gtag('config', 'G-H3F6SJKBRK');
 </script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -785,6 +787,14 @@ header.ripple span.figtree-adrift {
   <script src="./rain.js" defer=""></script>
 
 <script>
+  // ===== Global loud logging =====
+  window.addEventListener('error', (e) => {
+    console.error('[window.onerror]', e.message, `${e.filename}:${e.lineno}:${e.colno}`, e.error);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('[unhandledrejection]', e.reason);
+  });
+
   /* =====================
      Intro sequence
      ===================== */
@@ -1378,25 +1388,188 @@ function animateDoubtCounter(el, targetValue) {
   requestAnimationFrame(step);
 }
 
-  /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
-  const N8N_WEBHOOK_URL = 'https://alexmiretski.app.n8n.cloud/webhook/release-doubt';
+// ===== Turnstile (Invisible) - FIXED VERSION =====
+const TURNSTILE_SITE_KEY = '0x4AAAAAAB2dU8s_5y0RaCr2';
+let captchaWidgetId = null;
+let captchaToken = null;
+let turnstileContainer = null; // Track the container element
 
+// More robust Turnstile render for size:'invisible'
+let tsRenderAttempts = 0;
+const TS_MAX_ATTEMPTS = 1;
 
-  async function postDoubtToN8N(text){
-    const res = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
-    let data = {};
-    try { data = await res.json(); } catch(e) {}
-    if (!res.ok || data?.ok === false) {
-      const msg = data?.error || `Request failed (${res.status})`;
-      throw new Error(msg);
-    }
-    const d = Array.isArray(data) ? data[0] : data;
-    return { id: d.id, created_at: d.created_at, doubt: d.doubt ?? text };
+function renderTurnstileInvisible(mountSelector) {
+  const mount = document.querySelector(mountSelector);
+  if (!mount) {
+    console.warn('[TS] mount not found:', mountSelector);
+    return;
   }
+
+  // Store reference to container
+  turnstileContainer = mount;
+
+  // Wait for the library if needed
+  if (!window.turnstile || typeof window.turnstile.render !== 'function') {
+    console.log('[TS] waiting for library…');
+    setTimeout(() => renderTurnstileInvisible(mountSelector), 100);
+    return;
+  }
+
+  try {
+    // Clean up any previous widget
+    if (captchaWidgetId !== null && window.turnstile?.remove) {
+      try { 
+        window.turnstile.remove(captchaWidgetId); 
+      } catch(e) {
+        console.log('[TS] cleanup error (expected):', e.message);
+      }
+      captchaWidgetId = null;
+    }
+
+    captchaToken = null;
+
+    // Ensure container is in DOM and visible (even if off-screen)
+    if (!document.body.contains(mount)) {
+      console.warn('[TS] container not in DOM');
+      return;
+    }
+
+    captchaWidgetId = window.turnstile.render(mount, {
+      sitekey: TURNSTILE_SITE_KEY,
+      size: 'invisible',
+      callback: (t) => {
+        captchaToken = t;
+        tsRenderAttempts = 0;
+        console.log('[TS] token received:', t?.slice?.(0,12) || t);
+      },
+      'expired-callback': () => {
+        console.warn('[TS] token expired');
+        captchaToken = null;
+      },
+      'error-callback': (e) => {
+        console.warn('[TS] error-callback:', e);
+        captchaToken = null;
+        
+        // Only attempt self-heal if we haven't exceeded attempts
+        // AND the container still exists in DOM
+        if (tsRenderAttempts < TS_MAX_ATTEMPTS && 
+            turnstileContainer && 
+            document.body.contains(turnstileContainer)) {
+          tsRenderAttempts++;
+          
+          // Clean up widget
+          if (captchaWidgetId !== null) {
+            try { 
+              window.turnstile.remove(captchaWidgetId); 
+            } catch(_) {}
+            captchaWidgetId = null;
+          }
+          
+          // Re-render after delay
+          setTimeout(() => {
+            if (turnstileContainer && document.body.contains(turnstileContainer)) {
+              renderTurnstileInvisible(mountSelector);
+            }
+          }, 500);
+        } else {
+          console.warn('[TS] gave up after error (attempts:', tsRenderAttempts, ')');
+        }
+      }
+    });
+
+    console.log('[TS] widget rendered, id:', captchaWidgetId);
+  } catch (e) {
+    console.error('[TS] render failed:', e);
+    captchaToken = null;
+  }
+}
+
+function resetTurnstile() {
+  // Only reset if widget exists AND container is still in DOM
+  if (window.turnstile && 
+      captchaWidgetId !== null && 
+      turnstileContainer && 
+      document.body.contains(turnstileContainer)) {
+    try { 
+      window.turnstile.reset(captchaWidgetId); 
+      console.log('[TS] reset successful');
+    } catch (e) {
+      console.log('[TS] reset error (expected if widget removed):', e.message);
+    }
+  }
+  captchaToken = null;
+}
+
+async function getTurnstileToken() {
+  // Wait for widget to exist
+  for (let i = 0; i < 60 && captchaWidgetId === null; i++) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  if (!window.turnstile || captchaWidgetId === null) {
+    console.warn('[TS] Widget not available');
+    return null;
+  }
+
+  // If we already have a token from callback, use it
+  if (captchaToken) {
+    console.log('[TS] Using existing token');
+    return captchaToken;
+  }
+
+  // Try to execute the challenge
+  try {
+    console.log('[TS] Executing challenge...');
+    await window.turnstile.execute(captchaWidgetId);
+  } catch (e) {
+    console.warn('[TS] Execute failed:', e);
+    return null;
+  }
+
+  // Wait for token from callback (up to 3 seconds)
+  for (let i = 0; i < 30; i++) {
+    if (captchaToken) {
+      console.log('[TS] Token received after execute');
+      return captchaToken;
+    }
+    
+    // Also check getResponse as backup
+    try {
+      const response = window.turnstile.getResponse?.(captchaWidgetId);
+      if (response) {
+        captchaToken = response;
+        console.log('[TS] Token from getResponse');
+        return response;
+      }
+    } catch(e) {
+      // ignore
+    }
+    
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  console.warn('[TS] Token timeout');
+  return null;
+}
+
+  /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
+const N8N_WEBHOOK_URL = 'https://alexmiretski.app.n8n.cloud/webhook/release-doubt-and-care';
+
+async function postDoubtToN8N(text, captchaToken){
+  const res = await fetch(N8N_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, captchaToken }) // include Turnstile token
+  });
+  let data = {};
+  try { data = await res.json(); } catch(e) {}
+  if (!res.ok || data?.ok === false) {
+    const msg = data?.error || `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  const d = Array.isArray(data) ? data[0] : data;
+  return { id: d.id, created_at: d.created_at, doubt: d.doubt ?? text };
+}
 
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d', { alpha:true });
@@ -1927,28 +2100,49 @@ function pickRandomDoubt() {
   }
 
   function closeNote(){
-    if(!noteEl || noteClosing) return;
-    noteClosing = true;
+  if(!noteEl || noteClosing) return;
+  noteClosing = true;
 
-    if(noteBoat){
-      noteBoat.morphingIn = false;
-      // Don't set morphingOut - let the boat continue floating
-    }
-
-    noteEl.classList.add('closing');
-
-    const FINISH = ()=> {
-      overlay?.remove(); overlay=null; noteEl=null;
-      noteBoat = null; noteClosing = false; composerOpen = false;
-    };
-
-    let done=false;
-    noteEl.addEventListener('transitionend', (e)=>{
-      if(done || e.propertyName !== 'opacity') return;
-      done=true; FINISH();
-    }, {once:true});
-    setTimeout(()=>{ if(!done) FINISH(); }, 280);
+  if(noteBoat){
+    noteBoat.morphingIn = false;
   }
+
+  noteEl.classList.add('closing');
+  
+  // Clear Turnstile state before removing DOM elements
+  if (composerOpen) {
+    if (captchaWidgetId !== null && window.turnstile) {
+      try {
+        window.turnstile.remove(captchaWidgetId);
+      } catch(e) {
+        console.log('[TS] cleanup on close:', e.message);
+      }
+    }
+    captchaWidgetId = null;
+    captchaToken = null;
+    turnstileContainer = null;
+  }
+
+  const FINISH = () => {
+    overlay?.remove(); 
+    overlay = null; 
+    noteEl = null;
+    noteBoat = null; 
+    noteClosing = false; 
+    composerOpen = false;
+  };
+
+  let done = false;
+  noteEl.addEventListener('transitionend', (e) => {
+    if(done || e.propertyName !== 'opacity') return;
+    done = true; 
+    FINISH();
+  }, {once:true});
+  
+  setTimeout(() => { 
+    if(!done) FINISH(); 
+  }, 280);
+}
 
   function openNoteFromBoat(boat){
     boat.morphingIn = true;
@@ -1991,6 +2185,10 @@ function pickRandomDoubt() {
 
     const body = `
       <textarea class="compose-field" id="releaseInput" maxlength="200" placeholder="${placeholderText}"></textarea>
+<div id="cf-turnstile-container"
+     style="position:absolute; left:0; bottom:-100px; width:1px; height:1px; opacity:0.01;"
+     aria-hidden="true"></div>
+
       <div class="compose-foot">
         <div><span id="charCount">0</span>/200</div>
         <button class="pill-btn" id="submitDoubt" type="button">Release</button>
@@ -2008,9 +2206,18 @@ function pickRandomDoubt() {
       startScale: 0.72
     });
 
-    const input = document.getElementById('releaseInput');
-    const count = document.getElementById('charCount');
-    const submit = document.getElementById('submitDoubt');
+    // Mount invisible Turnstile after the composer is in the DOM
+// Mount invisible Turnstile after the composer is in the DOM
+
+const input = document.getElementById('releaseInput');
+const count = document.getElementById('charCount');
+const submit = document.getElementById('submitDoubt');
+
+// give the DOM a tick so the container is fully in place
+setTimeout(() => {
+  console.log('[TS] mounting invisible widget now');
+  renderTurnstileInvisible('#cf-turnstile-container');
+}, 50);
 
     input.addEventListener('input', () => {
       count.textContent = input.value.length;
@@ -2030,7 +2237,25 @@ function pickRandomDoubt() {
       const variant = getCurrentVariant();
 
       try {
-        const { id, created_at, doubt } = await postDoubtToN8N(text);
+      const BYPASS_TS = false; // turn OFF the bypass
+
+if (!BYPASS_TS) {
+  captchaToken = await getTurnstileToken();
+  if (!captchaToken) {
+    alert('Please complete the quick check, then try again.');
+    submit.disabled = false;
+    submit.textContent = prev;
+    return;
+  }
+} else {
+  captchaToken = 'BYPASS_TEST_TOKEN';
+}
+
+
+
+// Send token with your text
+const { id, created_at, doubt } = await postDoubtToN8N(text, captchaToken);
+resetTurnstile();
         const b = new Boat(variant);
         b.entry = {
           text: doubt,
@@ -2180,7 +2405,7 @@ fetchTotalDoubts().then(count => {
     { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
   ];
 
-  const letters = [...header.children];
+const letters = [...header.querySelectorAll(':scope > span > span')];
   const anims = letters.map((el, i) => {
     const a = el.animate(frames, {
       duration: 4000,
