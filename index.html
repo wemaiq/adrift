@@ -1222,7 +1222,7 @@ header.ripple span.figtree-adrift {
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
 async function fetchApprovedDoubts(limit = 600) {
-  // Fetch ALL doubt IDs first
+  // 1) Get ALL ids that are approved
   const idsUrl = `${SUPABASE_URL}/rest/v1/doubts?select=id&approved=is.true`;
   const idsRes = await fetch(idsUrl, {
     headers: {
@@ -1231,43 +1231,44 @@ async function fetchApprovedDoubts(limit = 600) {
       Accept: 'application/json'
     }
   });
-  
-  if (!idsRes.ok) {
-    throw new Error(`IDs fetch failed (${idsRes.status})`);
-  }
-  
-  const allIds = await idsRes.json();
-  console.log('Total doubts available:', allIds.length);
-  
-  // Randomly shuffle ALL IDs
-  const shuffledIds = allIds.sort(() => Math.random() - 0.5);
-  
-  // Take the first 600 from the shuffled list
-  const selectedIds = shuffledIds.slice(0, limit).map(item => item.id);
-  
-  // Fetch the full data for these specific IDs
-  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&id=in.(${selectedIds.join(',')})`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON,
-      Authorization: `Bearer ${SUPABASE_ANON}`,
-      Accept: 'application/json'
+  if (!idsRes.ok) throw new Error(`IDs fetch failed (${idsRes.status})`);
+  const allIdsRows = await idsRes.json();
+  const allIds = allIdsRows.map(r => r.id);
+
+  // 2) Shuffle and take up to {limit}
+  const shuffled = allIds.sort(() => Math.random() - 0.5);
+  const selectedIds = shuffled.slice(0, limit);
+
+  // 3) Fetch in CHUNKS, quoting each UUID
+  const CHUNK = 150; // keeps URLs reasonable
+  const rows = [];
+  for (let i = 0; i < selectedIds.length; i += CHUNK) {
+    const chunk = selectedIds.slice(i, i + CHUNK);
+    // quote each UUID -> "uuid"
+const encoded = chunk.map(id => encodeURIComponent(`"${id}"`)).join(',');
+const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&id=in.(${encoded})`;
+
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+        Accept: 'application/json'
+      }
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
     }
-  });
-  
-  if (!res.ok) {
-    const text = await res.text().catch(()=> '');
-    throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
+    rows.push(...await res.json());
   }
-  
-  const rows = await res.json();
-  console.log('Sample of dates after random selection:', rows.slice(0, 5).map(r => r.created_at));
-  
-  return rows.map(r => ({
-    id: r.id,
-    text: r.doubt ?? '',
-    date: (r.created_at || new Date().toISOString()).slice(0,10)
-  })).filter(d => d.text && d.text.trim().length);
+
+  return rows
+    .map(r => ({
+      id: r.id,
+      text: r.doubt ?? '',
+      date: (r.created_at || new Date().toISOString()).slice(0, 10)
+    }))
+    .filter(d => d.text && d.text.trim().length);
 }
 
 async function fetchTotalDoubts() {
@@ -1389,7 +1390,7 @@ function animateDoubtCounter(el, targetValue) {
 }
 
 // ===== Turnstile (Invisible) - FIXED VERSION =====
-const TURNSTILE_SITE_KEY = '0x4AAAAAAB2dU8s_5y0RaCr2';
+const TURNSTILE_SITE_KEY = '0x4AAAAAAB3yYAwiY5okqJtL';
 let captchaWidgetId = null;
 let captchaToken = null;
 let turnstileContainer = null; // Track the container element
@@ -1552,23 +1553,32 @@ async function getTurnstileToken() {
   return null;
 }
 
-  /* ---------- n8n webhook (TEST URL now; switch to /webhook/… for prod) ---------- */
-const N8N_WEBHOOK_URL = 'https://alexmiretski.app.n8n.cloud/webhook/release-doubt-and-care';
 
-async function postDoubtToN8N(text, captchaToken){
-  const res = await fetch(N8N_WEBHOOK_URL, {
+const WORKER_URL = 'https://adrift-intake.hiwemaiq.workers.dev';
+/* ---------- Cloudflare Worker intake ---------- */
+async function postToWorker(text, token){
+  const res = await fetch(WORKER_URL, {
     method: 'POST',
+    mode: 'cors',
+    credentials: 'omit',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, captchaToken }) // include Turnstile token
+    body: JSON.stringify({ text, "cf-turnstile-response": token })
   });
+
+  // Accept 204 No Content as success
+  if (res.status === 204) return true;
+
+  // Otherwise try JSON
   let data = {};
-  try { data = await res.json(); } catch(e) {}
-  if (!res.ok || data?.ok === false) {
-    const msg = data?.error || `Request failed (${res.status})`;
+  try { data = await res.json(); } catch (_) { /* empty/invalid body */ }
+
+  console.log('[intake] status:', res.status, 'body:', data);
+
+  if (!res.ok || data?.ok !== true) {
+    const msg = data?.error || `Worker request failed (${res.status})`;
     throw new Error(msg);
   }
-  const d = Array.isArray(data) ? data[0] : data;
-  return { id: d.id, created_at: d.created_at, doubt: d.doubt ?? text };
+  return true;
 }
 
   const canvas = document.getElementById('canvas');
@@ -2254,30 +2264,37 @@ if (!BYPASS_TS) {
 
 
 // Send token with your text
-const { id, created_at, doubt } = await postDoubtToN8N(text, captchaToken);
+await postToWorker(text, captchaToken);
+
 resetTurnstile();
-        const b = new Boat(variant);
-        b.entry = {
-          text: doubt,
-          date: (created_at || new Date().toISOString()).slice(0, 10),
-          id,
-          type: variant
-        };
-        if (variant === 'cheer') {
-          const careEntry = {
-            ...b.entry,
-            attribution: b.entry.attribution || 'Shared from the drift',
-            active: true
-          };
-          b.entry = careEntry;
-          setSupportNotes([...SUPPORT_NOTES, careEntry]);
-        }
-        b.x = innerWidth / 2;
-        b.yBase = innerHeight / 2;
-        b.phase = 0;
-        b.highlightUntil = performance.now() + 6000;
-        boats.push(b);
-        closeNote();
+
+// Show the boat immediately (optimistic UI)
+const b = new Boat(variant);
+b.entry = {
+  text, // exactly what the user typed
+  date: new Date().toISOString().slice(0, 10), // temporary date; batch will set real created_at
+  id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+  type: variant
+};
+
+if (variant === 'cheer') {
+  const careEntry = {
+    ...b.entry,
+    attribution: b.entry.attribution || 'Shared from the drift',
+    active: true
+  };
+  b.entry = careEntry;
+  setSupportNotes([...SUPPORT_NOTES, careEntry]);
+}
+
+b.x = innerWidth / 2;
+b.yBase = innerHeight / 2;
+b.phase = 0;
+b.highlightUntil = performance.now() + 6000;
+boats.push(b);
+
+closeNote();
+
       } catch (err) {
         console.error('Release failed:', err);
         const friendlyType = variant === 'cheer' ? 'care note' : 'doubt';
