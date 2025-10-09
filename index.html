@@ -1440,7 +1440,7 @@ function renderTurnstileInvisible(mountSelector) {
 
     captchaWidgetId = window.turnstile.render(mount, {
       sitekey: TURNSTILE_SITE_KEY,
-      size: 'invisible',
+      appearance: 'execute',
       callback: (t) => {
         captchaToken = t;
         tsRenderAttempts = 0;
