@@ -1961,26 +1961,28 @@ function pickRandomDoubt() {
         ctx.filter = this.variant === 'cheer' ? 'hue-rotate(68deg)' : 'none';
       }
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const ua = navigator.userAgent;
+        const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
 
-      if(isIOS) {
-        const dpr = window.devicePixelRatio || 1;
-        const offCanvas = document.createElement('canvas');
-        offCanvas.width = displayW * dpr;
-        offCanvas.height = displayH * dpr;
-        const offCtx = offCanvas.getContext('2d');
-        offCtx.scale(dpr, dpr);
-        offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-        ctx.globalCompositeOperation = 'screen';
-        ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
-        ctx.globalCompositeOperation = 'source-over';
-      } else {
-        const prev = ctx.globalCompositeOperation;
-        ctx.globalCompositeOperation = 'screen';
-        ctx.drawImage(boatVideo, srcX,srcY,srcW,srcH, -displayW/2, -displayH/2, displayW, displayH);
-        ctx.globalCompositeOperation = prev;
-      }
+      if (isWebKit) {
+  const dpr = window.devicePixelRatio || 1;
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width  = displayW * dpr;
+  offCanvas.height = displayH * dpr;
+  const offCtx = offCanvas.getContext('2d');
+  offCtx.scale(dpr, dpr);
+  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+
+  ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
+  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
+  ctx.globalCompositeOperation = 'source-over';
+} else {
+  const prev = ctx.globalCompositeOperation;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW/2, -displayH/2, displayW, displayH);
+  ctx.globalCompositeOperation = prev;
+}
+
 
       if (supportsFilter) {
         ctx.filter = prevFilter;
