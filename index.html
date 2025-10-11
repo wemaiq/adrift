@@ -1439,47 +1439,53 @@ function renderTurnstileInvisible(mountSelector) {
     }
 
     captchaWidgetId = window.turnstile.render(mount, {
-      sitekey: TURNSTILE_SITE_KEY,
-      size: 'invisible',
-      callback: (t) => {
-        captchaToken = t;
-        tsRenderAttempts = 0;
-        console.log('[TS] token received:', t?.slice?.(0,12) || t);
-      },
-      'expired-callback': () => {
-        console.warn('[TS] token expired');
-        captchaToken = null;
-      },
-      'error-callback': (e) => {
-        console.warn('[TS] error-callback:', e);
-        captchaToken = null;
-        
-        // Only attempt self-heal if we haven't exceeded attempts
-        // AND the container still exists in DOM
-        if (tsRenderAttempts < TS_MAX_ATTEMPTS && 
-            turnstileContainer && 
-            document.body.contains(turnstileContainer)) {
-          tsRenderAttempts++;
-          
-          // Clean up widget
-          if (captchaWidgetId !== null) {
-            try { 
-              window.turnstile.remove(captchaWidgetId); 
-            } catch(_) {}
-            captchaWidgetId = null;
-          }
-          
-          // Re-render after delay
-          setTimeout(() => {
-            if (turnstileContainer && document.body.contains(turnstileContainer)) {
-              renderTurnstileInvisible(mountSelector);
-            }
-          }, 500);
-        } else {
-          console.warn('[TS] gave up after error (attempts:', tsRenderAttempts, ')');
-        }
+  sitekey: TURNSTILE_SITE_KEY,
+  size: 'invisible',
+  callback: (t) => {
+    captchaToken = t;
+    tsRenderAttempts = 0;
+    console.log('[TS] token received:', t?.slice?.(0,12) || t);
+  },
+  'expired-callback': () => {
+    console.warn('[TS] token expired');
+    captchaToken = null;
+    // Immediately reset so the next submit gets a fresh token
+    if (window.turnstile &&
+        captchaWidgetId !== null &&
+        turnstileContainer &&
+        document.body.contains(turnstileContainer)) {
+      try {
+        window.turnstile.reset(captchaWidgetId);
+        console.log('[TS] reset after expiry');
+      } catch (e) {
+        console.log('[TS] reset error:', e.message);
       }
-    });
+    }
+  },
+  'error-callback': (e) => {
+    console.warn('[TS] error-callback:', e);
+    captchaToken = null;
+
+    if (tsRenderAttempts < TS_MAX_ATTEMPTS &&
+        turnstileContainer &&
+        document.body.contains(turnstileContainer)) {
+      tsRenderAttempts++;
+
+      if (captchaWidgetId !== null) {
+        try { window.turnstile.remove(captchaWidgetId); } catch (_) {}
+        captchaWidgetId = null;
+      }
+
+      setTimeout(() => {
+        if (turnstileContainer && document.body.contains(turnstileContainer)) {
+          renderTurnstileInvisible(mountSelector);
+        }
+      }, 500);
+    } else {
+      console.warn('[TS] gave up after error (attempts:', tsRenderAttempts, ')');
+    }
+  }
+});
 
     console.log('[TS] widget rendered, id:', captchaWidgetId);
   } catch (e) {
