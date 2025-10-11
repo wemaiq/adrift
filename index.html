@@ -1400,7 +1400,7 @@ let turnstileContainer = null; // Track the container element
 
 // More robust Turnstile render for size:'invisible'
 let tsRenderAttempts = 0;
-const TS_MAX_ATTEMPTS = 1;
+const TS_MAX_ATTEMPTS = 2;
 
 function renderTurnstileInvisible(mountSelector) {
   const mount = document.querySelector(mountSelector);
@@ -2201,7 +2201,7 @@ function pickRandomDoubt() {
     const body = `
       <textarea class="compose-field" id="releaseInput" maxlength="200" placeholder="${placeholderText}"></textarea>
 <div id="cf-turnstile-container"
-     style="position:absolute; left:0; bottom:-100px; width:1px; height:1px; opacity:0.01;"
+     style="position:absolute; left:0; bottom:0; width:1px; height:1px; opacity:0.01;"
      aria-hidden="true"></div>
 
       <div class="compose-foot">
