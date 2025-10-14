@@ -1138,7 +1138,7 @@ header.ripple span.figtree-adrift {
     try{
       // Use existing fetchers so first frame has content
       const supportPromise = ensureSupportData(400);
-      APPROVED_DOUBTS = await fetchApprovedDoubts(600);
+      APPROVED_DOUBTS = await fetchApprovedDoubts(120);
       if (APPROVED_DOUBTS.length === 0) {
         APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
       }
@@ -1224,55 +1224,61 @@ header.ripple span.figtree-adrift {
   const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
-async function fetchApprovedDoubts(limit = 600) {
-  // 1) Get ALL ids that are approved
-  const idsUrl = `${SUPABASE_URL}/rest/v1/doubts?select=id&approved=is.true`;
-  const idsRes = await fetch(idsUrl, {
-    headers: {
-      apikey: SUPABASE_ANON,
-      Authorization: `Bearer ${SUPABASE_ANON}`,
-      Accept: 'application/json'
-    }
-  });
-  if (!idsRes.ok) throw new Error(`IDs fetch failed (${idsRes.status})`);
-  const allIdsRows = await idsRes.json();
-  const allIds = allIdsRows.map(r => r.id);
+// NEW: pulls ~120 rows total, evenly across the full timeline (old + new) without DB changes
+async function fetchApprovedDoubts(limit = 120) {
+  const headers = {
+    apikey: SUPABASE_ANON,
+    Authorization: `Bearer ${SUPABASE_ANON}`,
+    Accept: 'application/json',
+    Prefer: 'count=exact'
+  };
 
-  // 2) Shuffle and take up to {limit}
-  const shuffled = allIds.sort(() => Math.random() - 0.5);
-  const selectedIds = shuffled.slice(0, limit);
+  // 1) Tiny count request (reads total from headers)
+  const countRes = await fetch(`${SUPABASE_URL}/rest/v1/doubts?select=id&approved=is.true&limit=1`, { headers });
+  if (!countRes.ok) throw new Error(`count failed (${countRes.status})`);
+  const total = parseInt(countRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  if (!total) return [];
 
-  // 3) Fetch in CHUNKS, quoting each UUID
-  const CHUNK = 150; // keeps URLs reasonable
-  const rows = [];
-  for (let i = 0; i < selectedIds.length; i += CHUNK) {
-    const chunk = selectedIds.slice(i, i + CHUNK);
-    // quote each UUID -> "uuid"
-const encoded = chunk.map(id => encodeURIComponent(`"${id}"`)).join(',');
-const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at&id=in.(${encoded})`;
+  // 2) Stratified sampling: slice the whole range into bins, fetch a few from each bin
+  const bins = Math.min(12, Math.max(6, Math.ceil(limit / 10))); // 6–12 bins
+  const perBin = Math.max(1, Math.ceil(limit / bins));
+  const binSize = Math.max(1, Math.floor(total / bins));
 
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${SUPABASE_ANON}`,
-        Accept: 'application/json'
-      }
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Supabase fetch failed (${res.status}) ${text}`);
-    }
-    rows.push(...await res.json());
+  const buildUrl = (o, l) =>
+    `${SUPABASE_URL}/rest/v1/doubts` +
+    `?select=id,doubt,created_at` +
+    `&approved=is.true` +
+    `&order=created_at.asc` +
+    `&limit=${l}&offset=${o}`;
+
+  const requests = [];
+  for (let i = 0; i < bins; i++) {
+    const base = i * binSize;
+    const jitterRoom = Math.max(1, binSize - perBin);
+    const jitter = Math.floor(Math.random() * jitterRoom);
+    const offset = Math.min(Math.max(0, base + jitter), Math.max(0, total - perBin));
+    requests.push(fetch(buildUrl(offset, perBin), { headers }).then(r => r.json()));
   }
 
-  return rows
-    .map(r => ({
-      id: r.id,
-      text: r.doubt ?? '',
-      date: (r.created_at || new Date().toISOString()).slice(0, 10)
-    }))
-    .filter(d => d.text && d.text.trim().length);
+  // 3) Merge, dedupe, shuffle, trim
+  const groups = await Promise.all(requests);
+  const rows = groups.flat().filter(r => r?.id && r?.doubt);
+
+  const seen = new Set();
+  const deduped = rows.filter(r => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+
+  for (let i = deduped.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
+  }
+
+  return deduped.slice(0, limit).map(r => ({
+    id: r.id,
+    text: String(r.doubt).trim(),
+    date: (r.created_at || new Date().toISOString()).slice(0, 10)
+  }));
 }
+
 
 async function fetchTotalDoubts() {
   const headers = {
@@ -1829,7 +1835,7 @@ function pickRandomDoubt() {
 
   async function refreshDoubtPool() {
   try {
-    const freshDoubts = await fetchApprovedDoubts(600);
+    const freshDoubts = await fetchApprovedDoubts(120);
     if (freshDoubts.length > 0) {
       const oldLength = APPROVED_DOUBTS.length;
       APPROVED_DOUBTS = freshDoubts;
@@ -2384,7 +2390,7 @@ closeNote();
   (async function init(){
     const supportPromise = ensureSupportData(400);
     try{
-      APPROVED_DOUBTS = await fetchApprovedDoubts(600);
+      APPROVED_DOUBTS = await fetchApprovedDoubts(120);
       if (APPROVED_DOUBTS.length === 0) {
         console.warn('No approved doubts found; using placeholder.');
         APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
