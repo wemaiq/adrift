@@ -1213,6 +1213,10 @@ header.ripple span.figtree-adrift {
         await preloadAll();   // preload video, audio (buffer only), fonts, rain.js (best effort), data + seed boats
       } finally {
         setLoadingUI(false);
+        // kick the video so boats can render without further interaction
+      boatVideo.muted = true;
+      boatVideo.play().catch(() => {});
+
         revealMainContent();  // only after preload finishes (or the 7s cap)
       }
     });
