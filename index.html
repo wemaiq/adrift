@@ -1212,13 +1212,26 @@ header.ripple span.figtree-adrift {
       try {
         await preloadAll();   // preload video, audio (buffer only), fonts, rain.js (best effort), data + seed boats
       } finally {
-        setLoadingUI(false);
-        // kick the video so boats can render without further interaction
-      boatVideo.muted = true;
-      boatVideo.play().catch(() => {});
+  setLoadingUI(false);
 
-        revealMainContent();  // only after preload finishes (or the 7s cap)
-      }
+  // Ensure the video is actually playing and mark it ready so boats draw immediately
+  try {
+    boatVideo.muted = true;
+    await boatVideo.play().catch(() => {});
+    if (boatVideo.readyState >= 2) {
+      videoReady = true; // let Boat.draw() run now
+    } else {
+      boatVideo.addEventListener('loadeddata', () => { videoReady = true; }, { once: true });
+    }
+  } catch (_) {}
+
+  // Safety: make sure we have boats before revealing
+  if (!boats || !boats.length) {
+    boats = Array.from({ length: BOAT_COUNT }, () => new Boat(getCurrentVariant()));
+  }
+
+  revealMainContent(); // fade intro only after we've armed drawing
+}
     });
   }
 
