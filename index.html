@@ -1138,7 +1138,7 @@ header.ripple span.figtree-adrift {
     try{
       // Use existing fetchers so first frame has content
       const supportPromise = ensureSupportData(400);
-      APPROVED_DOUBTS = await fetchApprovedDoubts(120);
+      APPROVED_DOUBTS = await fetchApprovedDoubts(80);
       if (APPROVED_DOUBTS.length === 0) {
         APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
       }
@@ -1241,8 +1241,8 @@ header.ripple span.figtree-adrift {
   const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
-// NEW: pulls ~120 rows total, evenly across the full timeline (old + new) without DB changes
-async function fetchApprovedDoubts(limit = 120) {
+// NEW: pulls ~80 rows total, evenly across the full timeline (old + new) without DB changes
+async function fetchApprovedDoubts(limit = 80) {
   const headers = {
     apikey: SUPABASE_ANON,
     Authorization: `Bearer ${SUPABASE_ANON}`,
@@ -1852,7 +1852,7 @@ function pickRandomDoubt() {
 
   async function refreshDoubtPool() {
   try {
-    const freshDoubts = await fetchApprovedDoubts(120);
+    const freshDoubts = await fetchApprovedDoubts(80);
     if (freshDoubts.length > 0) {
       const oldLength = APPROVED_DOUBTS.length;
       APPROVED_DOUBTS = freshDoubts;
@@ -2407,7 +2407,7 @@ closeNote();
   (async function init(){
     const supportPromise = ensureSupportData(400);
     try{
-      APPROVED_DOUBTS = await fetchApprovedDoubts(120);
+      APPROVED_DOUBTS = await fetchApprovedDoubts(80);
       if (APPROVED_DOUBTS.length === 0) {
         console.warn('No approved doubts found; using placeholder.');
         APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
