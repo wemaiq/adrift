@@ -1075,7 +1075,8 @@ if (isWebKit) {
 
   ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
 
-  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayHeight);
+ ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
+
 
   ctx.globalCompositeOperation = 'source-over';
 
