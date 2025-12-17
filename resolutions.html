@@ -469,7 +469,7 @@
   <header class="ripple"><span><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></span><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>6</span></span></header>
 
   <!-- media -->
-  <video id="boatVideo" src="lantern.mp4" loop="" muted="" playsinline="" webkit-playsinline="" preload="auto"></video>
+  <video id="boatVideo" src="lantern.mp4" loop="" muted="" playsinline="" preload="auto"></video>
   <audio id="bgAudio" src="starlight.mp3" loop="" preload="auto"></audio>
 
   <!-- layers -->
@@ -581,22 +581,15 @@
   addEventListener('resize', resize);
   resize();
 
-  /* ====== ENHANCED iOS Video Autoplay Fix ====== */
+  /* ====== Media autoplay ====== */
   const DEFAULT_VOL = 0.28;
   function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
   function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
 
   let videoReady = false;
   let videoRestartAttempts = 0;
-  const MAX_RESTART_ATTEMPTS = 3;
+  const MAX_RESTART_ATTEMPTS = 2;
   let videoReadyCheckTimeoutId = null;
-  let videoPlayAttempts = 0;
-
-  // Ensure video has all iOS attributes
-  boatVideo.muted = true;
-  boatVideo.setAttribute('playsinline', '');
-  boatVideo.setAttribute('webkit-playsinline', '');
-  boatVideo.setAttribute('preload', 'auto');
 
   function markVideoReadyIfPlayable() {
     if (boatVideo && boatVideo.readyState >= 2) {
@@ -605,88 +598,34 @@
         clearTimeout(videoReadyCheckTimeoutId);
         videoReadyCheckTimeoutId = null;
       }
-      console.log('Video marked as ready');
-    }
-  }
-
-  // iOS-specific aggressive video start
-  async function forceVideoPlay() {
-    if (videoPlayAttempts >= 5) return;
-    videoPlayAttempts++;
-    
-    try {
-      boatVideo.muted = true; // Ensure muted
-      await boatVideo.play();
-      markVideoReadyIfPlayable();
-      console.log('Video playing (attempt ' + videoPlayAttempts + ')');
-    } catch (error) {
-      console.log('Play attempt ' + videoPlayAttempts + ' failed:', error.message);
-      
-      // Try different strategies
-      if (videoPlayAttempts === 1) {
-        // Strategy 1: Load and retry
-        boatVideo.load();
-        setTimeout(forceVideoPlay, 100);
-      } else if (videoPlayAttempts === 2) {
-        // Strategy 2: Set src again
-        const src = boatVideo.src;
-        boatVideo.src = '';
-        boatVideo.load();
-        boatVideo.src = src;
-        setTimeout(forceVideoPlay, 200);
-      } else if (videoPlayAttempts === 3) {
-        // Strategy 3: Wait for user interaction
-        const playOnTouch = () => {
-          boatVideo.play()
-            .then(() => {
-              markVideoReadyIfPlayable();
-              console.log('Video started after touch');
-            })
-            .catch(() => {});
-          document.removeEventListener('touchstart', playOnTouch);
-          document.removeEventListener('click', playOnTouch);
-        };
-        document.addEventListener('touchstart', playOnTouch, { once: true, passive: true });
-        document.addEventListener('click', playOnTouch, { once: true });
-      }
     }
   }
 
   boatVideo.addEventListener('canplay', () => {
     markVideoReadyIfPlayable();
     if (boatVideo.paused) {
-      forceVideoPlay();
-    }
-  });
-
-  boatVideo.addEventListener('loadeddata', () => {
-    markVideoReadyIfPlayable();
-    if (boatVideo.paused) {
-      forceVideoPlay();
+      boatVideo.play().catch(() => {});
     }
   });
 
   function checkAndRestartVideo() {
     if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
-      console.warn(`Video not ready, restart attempt ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
+      console.warn(`Video not ready after timeout, attempting restart ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
       videoRestartAttempts++;
 
       const currentSrc = boatVideo.src;
       boatVideo.src = '';
       boatVideo.load();
-      
-      // Add cache buster for iOS
-      const cacheBuster = currentSrc.includes('?') ? '&' : '?';
-      boatVideo.src = currentSrc + cacheBuster + 't=' + Date.now();
-      
-      boatVideo.load();
-      
+      boatVideo.src = currentSrc + '?t=' + Date.now();
+
       setTimeout(() => {
-        forceVideoPlay();
-      }, 200);
+        boatVideo.play().catch(() => {
+          console.error('Video restart failed');
+        });
+      }, 500);
 
       if (videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
-        setTimeout(checkAndRestartVideo, 5000);
+        setTimeout(checkAndRestartVideo, 8000);
       }
     }
   }
@@ -699,76 +638,49 @@
       if (!videoReady) {
         checkAndRestartVideo();
       }
-    }, 3000); // Check faster for iOS
+    }, 15000);
   }
 
-  // Start video immediately with multiple attempts
-  forceVideoPlay();
+  boatVideo.play().catch(() => {});
   scheduleVideoReadyCheck();
-
-  // Also try on DOMContentLoaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(forceVideoPlay, 50);
-    });
-  }
-
-  // Check periodically for first 5 seconds
-  let checkCount = 0;
-  const checkInterval = setInterval(() => {
-    checkCount++;
-    if (checkCount > 10 || videoReady) {
-      clearInterval(checkInterval);
-      return;
-    }
-    
-    if (boatVideo.paused) {
-      forceVideoPlay();
-    }
-  }, 500);
 
   let audioStarted = false;
   function ensurePlay(e){
     if (audioStarted) return;
 
-    if (!videoReady || boatVideo.paused) {
-      console.log('User interaction - forcing video');
-      forceVideoPlay();
+    if (!videoReady) {
+      console.log('User interaction - forcing video restart');
+      checkAndRestartVideo();
     }
+    boatVideo.play().catch(() => {});
     startAudio();
     audioStarted = true;
 
     removeEventListener('pointerdown', ensurePlay);
     removeEventListener('keydown', ensurePlay);
-    removeEventListener('touchstart', ensurePlay);
   }
   addEventListener('pointerdown', ensurePlay);
   addEventListener('keydown', ensurePlay);
-  addEventListener('touchstart', ensurePlay, { passive: true });
 
   soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
-  
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
     if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
     markVideoReadyIfPlayable();
-    forceVideoPlay();
+    boatVideo.play().catch(() => {});
   });
 
   addEventListener('pageshow', (event) => {
+    const navigationEntry = performance?.getEntriesByType?.('navigation')?.[0];
+    const isReload = navigationEntry ? navigationEntry.type === 'reload' : false;
+    if (isReload && !event.persisted) return;
+
     markVideoReadyIfPlayable();
-    forceVideoPlay();
+    boatVideo.play().catch(() => {});
     if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
 
     if (!videoReady) {
       scheduleVideoReadyCheck();
-    }
-  });
-
-  // iOS focus event
-  window.addEventListener('focus', () => {
-    if (!videoReady || boatVideo.paused) {
-      forceVideoPlay();
     }
   });
 
@@ -1380,3 +1292,204 @@ if (isWebKit) {
 
     const noteTitle = 'Release a resolution';
     const placeholderText = 'Type your resolution (200 characters max)';
+
+    const body = `
+      <textarea class="compose-field" id="releaseInput" maxlength="200" placeholder="${placeholderText}"></textarea>
+<div id="cf-turnstile-container"
+     style="position:absolute; left:0; bottom:0; width:1px; height:1px; opacity:0.01;"
+     aria-hidden="true"></div>
+      <div class="compose-foot">
+        <div><span id="charCount">0</span>/200</div>
+        <button class="pill-btn" id="submitResolution" type="button">Release</button>
+      </div>
+      <p class="compose-disclaimer">If you're struggling with self-harm, please reach out for help at findahelpline.com. Offensive content will be removed.</p>
+    `;
+
+    createNote({
+      x: innerWidth / 2,
+      y: innerHeight / 2,
+      title: noteTitle,
+      bodyHTML: body,
+      metaHTML: '',
+      boat: null,
+      startScale: 0.72
+    });
+
+    const input = document.getElementById('releaseInput');
+    const count = document.getElementById('charCount');
+    const submit = document.getElementById('submitResolution');
+
+    setTimeout(() => {
+      renderTurnstileInvisible('#cf-turnstile-container');
+    }, 50);
+
+    input.addEventListener('input', () => {
+      count.textContent = input.value.length;
+    });
+    setTimeout(() => input.focus(), 50);
+
+    async function doRelease() {
+      const text = (input.value || '').trim();
+      if (!text) {
+        input.focus();
+        return;
+      }
+
+      submit.disabled = true;
+      const prev = submit.textContent;
+      submit.textContent = 'Releasing…';
+
+      try {
+        const BYPASS_TS = false;
+
+        if (!BYPASS_TS) {
+          captchaToken = await getTurnstileToken();
+          if (!captchaToken) {
+            alert('Please complete the quick check, then try again.');
+            submit.disabled = false;
+            submit.textContent = prev;
+            return;
+          }
+        } else {
+          captchaToken = 'BYPASS_TEST_TOKEN';
+        }
+
+        await postToWorker(text, captchaToken);
+        resetTurnstile();
+
+        const b = new Boat();
+        b.entry = {
+          text,
+          date: new Date().toISOString().slice(0, 10),
+          id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+        };
+
+        b.x = innerWidth / 2;
+        b.yBase = innerHeight / 2;
+        b.phase = 0;
+        b.highlightUntil = performance.now() + 6000;
+        boats.push(b);
+
+        closeNote();
+
+      } catch (err) {
+        console.error('Release failed:', err);
+        alert(err.message || 'Failed to release your resolution.');
+      } finally {
+        submit.disabled = false;
+        submit.textContent = prev;
+      }
+    }
+
+    submit.addEventListener('click', doRelease);
+    input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        doRelease();
+      }
+    });
+  }
+
+  function animate(now=0){ 
+    ctx.clearRect(0,0,W,H); 
+
+    for(const b of boats){ 
+      b.update(now, boats); 
+    }
+
+    const byDepth = [...boats].sort((a,b)=> (a.y||a.yBase) - (b.y||b.yBase));
+    for(const b of byDepth){
+      b.draw(now);
+    }
+
+    requestAnimationFrame(animate); 
+  }
+  
+  animate();
+
+  canvas.addEventListener('pointermove', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let overBoat = false;
+    
+    for(const b of boats){ 
+      if(b.hit(mx,my) && !b.morphingOut){
+        overBoat = true;
+        break;
+      }
+    }
+    
+    canvas.style.cursor = overBoat ? 'pointer' : 'default';
+  });
+  
+  canvas.addEventListener('click', e=>{
+    if(composerOpen) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for(const b of boats){ 
+      if(b.hit(mx,my)){ 
+        if(b.morphingOut) return; 
+        openNoteFromBoat(b); 
+        break; 
+      } 
+    }
+  });
+
+  releaseBtn.addEventListener('click', openComposerNote);
+  addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeNote(); } });
+
+  (async function init(){
+    try {
+      APPROVED_RESOLUTIONS = await fetchApprovedResolutions(80);
+      if (APPROVED_RESOLUTIONS.length === 0) {
+        APPROVED_RESOLUTIONS = [{ id:'p1', text:'(waiting for first approved resolution…)', date:new Date().toISOString().slice(0,10) }];
+      }
+    } catch (err) {
+      console.error('Failed to load resolutions:', err);
+      APPROVED_RESOLUTIONS = [{ id:'p1', text:'(temporarily unable to load resolutions)', date:new Date().toISOString().slice(0,10) }];
+    }
+
+    initializeResolutionPool();
+    boats = Array.from({length: BOAT_COUNT}, () => new Boat());
+  })();
+</script>
+
+<script>
+(() => {
+  const header = document.querySelector('header.ripple');
+  if (!header) return;
+
+  const frames = [
+    { opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' },
+    { offset: 0.4, opacity: 0.35 },
+    { offset: 0.5, opacity: 1, transform: 'translate3d(0.5em,0,0) scale(1.1)', textShadow: '0 0 20px #fff' },
+    { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
+  ];
+
+  const letters = [...header.querySelectorAll(':scope > span:first-child > span')];
+  const badgeNumbers = [...header.querySelectorAll('.new-badge span')];
+  const allElements = [...letters, ...badgeNumbers];
+  const anims = allElements.map((el, i) => {
+    const a = el.animate(frames, {
+      duration: 4000,
+      fill: 'both',
+      delay: i * 60
+    });
+    a.pause();
+    return a;
+  });
+
+  header.addEventListener('mouseenter', () => {
+    anims.forEach(a => { a.playbackRate = 1; a.play(); });
+  });
+
+  header.addEventListener('mouseleave', () => {
+    anims.forEach(a => a.reverse());
+  });
+})();
+</script>
+<script src="./embers.js" defer></script>
+<script src="./menu.js" defer></script>
+</body>
+</html>
+  
