@@ -578,16 +578,21 @@
 prepareInlineVideo();
 
   let W, H;
-  function resize() {
-    const dpr = window.devicePixelRatio || 1;
-    W = innerWidth;
-    H = innerHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.scale(dpr, dpr);
-  }
+ function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  W = innerWidth;
+  H = innerHeight;
+
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  // ✅ reset transform so scale doesn't stack
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+}
+
   addEventListener('resize', resize);
   resize();
 
