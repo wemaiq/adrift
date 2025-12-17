@@ -615,18 +615,21 @@
     }
   });
 
-  // ✅ Mark ready as soon as the first frame exists (more reliable than canplay on iOS)
+  // Mark ready as soon as the first frame exists (more reliable than canplay on iOS)
 boatVideo.addEventListener('loadeddata', markVideoReadyIfPlayable);
 boatVideo.addEventListener('playing', markVideoReadyIfPlayable);
 
-// ✅ iOS (Chrome is WebKit too): give it a short kick after layout
+// iOS (Chrome is WebKit too): give it a short kick after layout
 if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
   setTimeout(() => {
+    // If we already have frames, do NOT reload (prevents blink)
+    if (videoReady || boatVideo.videoWidth > 0 || boatVideo.readyState >= 2) return;
+
     try { boatVideo.load(); } catch (_) {}
-    markVideoReadyIfPlayable();
     boatVideo.play().catch(() => {});
   }, 600);
 }
+
 
 
   function checkAndRestartVideo() {
