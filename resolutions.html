@@ -569,15 +569,18 @@
 
   let W, H;
   function resize() {
-    const dpr = window.devicePixelRatio || 1;
-    W = innerWidth;
-    H = innerHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.scale(dpr, dpr);
-  }
+  const dpr = window.devicePixelRatio || 1;
+  W = innerWidth;
+  H = innerHeight;
+
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+}
   addEventListener('resize', resize);
   resize();
 
@@ -978,8 +981,11 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
       this.paused = false;
       this.morphingIn = false;
       this.morphingOut = false;
-      this.morphT0 = 0;
-      this.spawnedAt = performance.now();
+this.morphT0 = 0;
+
+this.spawnedAt = performance.now();
+this.firstDrawAt = 0;                
+
     }
 
     update(t, boats){
@@ -1016,10 +1022,15 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
     }
 
     draw(now){
-      if(!videoReady) return;
-      const fadeIn = Math.min(1, (performance.now() - (this.spawnedAt || 0)) / 250);
+  if(!videoReady) return;
 
-      const vW=boatVideo.videoWidth||640, vH=boatVideo.videoHeight||360;
+  if (!boatVideo.videoWidth || !boatVideo.videoHeight) return;
+
+  if (!this.firstDrawAt) this.firstDrawAt = performance.now();
+  const fadeIn = Math.min(1, (performance.now() - this.firstDrawAt) / 250);
+
+  const vW = boatVideo.videoWidth, vH = boatVideo.videoHeight;
+
       const srcW=vW*CROP.w, srcH=vH*CROP.h, srcX=vW*CROP.x, srcY=vH*CROP.y;
 
       const yNorm = Math.max(0, Math.min(1, (this.y || this.yBase) / H));
