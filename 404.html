@@ -56,6 +56,37 @@
             margin-bottom: 40px;
         }
 
+        .site-footer {
+            position: fixed;
+            left: 50%;
+            bottom: 16px;
+            transform: translateX(-50%);
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+            color: #9aa0a8;
+            opacity: 0.8;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.02);
+            backdrop-filter: blur(3px);
+            white-space: nowrap;
+        }
+
+        .site-footer a {
+            color: #b7bdc5;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            transition: color .25s ease, border-color .25s ease;
+        }
+
+        .site-footer a:hover,
+        .site-footer a:focus-visible {
+            color: #ececed;
+            border-bottom-color: rgba(255,255,255,.4);
+            outline: none;
+        }
+
         .boat-container {
             position: relative;
             width: 200px;
@@ -175,6 +206,8 @@
         
         <div class="home-link">Click here to return <a href="https://adrift.site/">home</a></div>
     </div>
+
+    <footer class="site-footer">© 2025 Adrift. <a href="https://ko-fi.com/adriftsite" target="_blank" rel="noreferrer noopener">Help keep this alive.</a></footer>
 
     <script>
         // Ensure video plays on all devices

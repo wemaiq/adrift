@@ -16,9 +16,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Dongle&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./menu.css">
 
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<script>
+  (() => {
+    const params = new URLSearchParams(window.location.search);
+    let sessionSkip = false;
+    try { sessionSkip = sessionStorage.getItem('skipIntro') === '1'; } catch (_) {}
+    if (params.get('skipIntro') === '1' || window.location.hash === '#app' || sessionSkip) {
+      document.documentElement.dataset.skipIntro = '1';
+    }
+  })();
+</script>
 
 <!-- SEO + AEO Metadata -->
 <title>Adrift — A Quiet Place to Share or Read Anonymous Doubts</title>
@@ -73,8 +84,25 @@
   }
 
   html, body { height:100%; }
-  body { margin:0; background:#000; overflow:hidden; font-family: ui-sans-serif, system-ui; color:#ececed; }
+  body {
+    margin:0;
+    background:#000;
+    overflow:hidden;
+    font-family: ui-sans-serif, system-ui;
+    color:#ececed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+  }
+
+  body.is-page-visible { opacity: 1; }
+  body.is-page-fading { opacity: 0; }
   canvas { display:block; width:100%; height:100%; }
+
+  html[data-skip-intro="1"] #intro-overlay { display: none; }
+  html[data-skip-intro="1"] .main-content { opacity: 1; }
 
   /* Intro overlay */
   #intro-overlay {
@@ -191,7 +219,90 @@
   #canvas{ position:fixed; inset:0; z-index:1; }
 
   header{ font-weight:400; position:fixed; top:18px; left:50%; transform:translateX(-50%); letter-spacing:0.25em; font-size:20px; font-family:"Dongle", ui-sans-serif, system-ui, sans-serif;text-transform:uppercase; text-align:center; user-select:none; z-index:5; }
-  .hint{ font-weight:400; position:fixed; left:20px; bottom:16px; color:#9aa0a8; font-size:12px; opacity:.7; user-select:none; background: rgba(255,255,255,.03); letter-spacing: 0.05em; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.06); backdrop-filter: blur(3px); z-index:5; }
+  .top-nav {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .top-nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ececed;
+    text-decoration: none;
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    padding: 8px 2px;
+    font-weight: 400;
+    transition: color 0.2s ease, font-weight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .top-nav__link:hover,
+  .top-nav__link:focus-visible {
+    outline: none;
+    font-weight: 500;
+  }
+
+  .top-nav__link.is-active {
+    font-weight: 500;
+  }
+
+  .top-nav__tag {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgb(252 171 43);
+    color: #000;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    transform: translateY(-4px);
+  }
+  .hint{ font-weight:400; position:fixed; left:20px; bottom:16px; color:#9aa0a8; font-size:12px; opacity:.7; user-select:none; background: rgba(255,255,255,.03); letter-spacing: 0.05em; padding: 8px 10px; border-radius: 10px; backdrop-filter: blur(3px); z-index:5; }
+
+  .site-footer {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+    color: #9aa0a8;
+    opacity: 0.8;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.02);
+    backdrop-filter: blur(3px);
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  .site-footer a {
+    color: #b7bdc5;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    transition: color .25s ease, border-color .25s ease;
+  }
+
+  .site-footer a:hover,
+  .site-footer a:focus-visible {
+    color: #ececed;
+    border-bottom-color: rgba(255,255,255,.4);
+    outline: none;
+  }
 
   /* View toggle */
   .view-toggle {
@@ -432,6 +543,12 @@
   .sound-toggle.active{ color:#ececed; border-color: rgba(255,255,255,.12); }
   .sound-toggle:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.25); outline-offset:2px; }
 
+  @media (max-width: 640px) {
+    .hint { bottom: 48px; }
+    .sound-toggle { bottom: 48px; }
+    .site-footer { bottom: 16px; }
+  }
+
   /* Center-bottom CTA (kept) */
   .cta-btn{
     padding:28px 36px; border-radius:9999px; font-size:13px; line-height:1; color:#fff;
@@ -449,7 +566,7 @@
   }
 
   .cta-btn--floating {
-    position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:5;
+    position:fixed; left:50%; transform:translateX(-50%); bottom:56px; z-index:5;
   }
   .cta-btn:hover{ box-shadow: 0 0 36px 12px rgba(255, 219, 90, 0.174), 0 0 8px 2px rgba(255,255,255,.25); border-color: rgba(255,255,255,.5); }
   .cta-btn:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.35); outline-offset:3px; }
@@ -615,6 +732,16 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
   color: transparent;
 }
 
+.ripple a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ripple a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 6px;
+}
+
 @keyframes rippleEffect {
   40% {
     opacity: .35;
@@ -695,13 +822,23 @@ header.ripple span.figtree-adrift {
   }
 
   .cta-btn--floating {
-    bottom: 70px;
+    bottom: 90px;
   }
   
   header {
     font-size: 18px; /* Slightly smaller header on mobile */
   }
-  
+
+  .top-nav {
+    top: 10px;
+    right: 12px;
+  }
+
+  .top-nav__link {
+    font-size: 12px;
+    padding: 8px 0;
+  }
+
   /* Larger close button on mobile for better touch targets */
  .note-close {
   top: 6px; /* changed from 10px to 15px */
@@ -723,13 +860,14 @@ header.ripple span.figtree-adrift {
 }
 
 
-/* Landscape mobile - spread out bottom elements */
+  /* Landscape mobile - spread out bottom elements */
 @media (max-height: 500px) and (orientation: landscape) {
-  .hint { left: 10px; bottom: 10px;}
-  .sound-toggle { right: 10px; bottom: 10px; }
+  .hint { left: 10px; bottom: 64px;}
+  .sound-toggle { right: 10px; bottom: 64px; }
   .cta-btn { padding: 16px 24px; }
-  .cta-btn--floating { bottom: 16px; }
+  .cta-btn--floating { bottom: 52px; }
   header { top: 10px; }
+  .top-nav { top: 10px; right: 10px; }
   .view-toggle { top: 64px; }
 }
 
@@ -746,18 +884,39 @@ header.ripple span.figtree-adrift {
 </style>
 </head>
 <body class="figtree-adrift">
+  <button class="menu-toggle" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open navigation">
+    <span class="menu-toggle__bars">
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+    </span>
+  </button>
+  <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+    <div class="menu-overlay__content">
+      <div class="menu-overlay__links" role="navigation" aria-label="Primary navigation">
+        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">NEW</span></a>
+        <a class="menu-link" href="about.html">About</a>
+      </div>
+      <div class="menu-overlay__hint">Tap anywhere to close</div>
+    </div>
+  </div>
   <!-- Intro overlay -->
  <div id="intro-overlay">
     <div class="intro-content">
-      <div id="doubt-counter" aria-live="polite" data-start-value="0">0 boats released</div>
-      <p id="intro-text">Adrift is a quiet space where doubts become paper boats and drift together across a shared sea.</p>
+      <div id="doubt-counter" aria-live="polite" data-start-value="0">0 notes released</div>
+      <p id="intro-text">Adrift is a quiet space where doubt, care, and intention drift together.</p>
       <button id="enterBtn" class="cta-btn intro-enter-btn" type="button">Enter</button>
     </div>
   </div>
 
   <!-- Main content wrapper -->
   <div class="main-content">
-    <header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a class="top-nav__link" href="about.html">About</a>
+      <a class="top-nav__link" href="resolutions.html">Resolutions <span class="top-nav__tag">NEW</span></a>
+    </nav>
+ <header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
     <div class="view-toggle" role="group" aria-label="Choose between doubts and affirmations">
       <button type="button" class="view-toggle__option is-active" data-view="doubts" aria-pressed="true">Doubt</button>
       <button type="button" class="view-toggle__option" data-view="affirmations" aria-pressed="false">Care</button>
@@ -782,11 +941,109 @@ header.ripple span.figtree-adrift {
     <div class="hint">Click boat to unfold</div>
     <button id="soundToggle" class="sound-toggle" aria-pressed="false" aria-label="Enable sound">Sound: Off</button>
     <button id="releaseBtn" class="cta-btn cta-btn--floating" aria-label="Release your doubt">Release your doubt</button>
+    <footer class="site-footer">© 2025 Adrift. <a href="https://ko-fi.com/adriftsite" target="_blank" rel="noreferrer noopener">Help keep this alive.</a></footer>
   </div>
 
   <script src="./rain.js" defer=""></script>
+  <script src="./menu.js" defer></script>
 
 <script>
+  (() => {
+    const body = document.body;
+
+    requestAnimationFrame(() => body.classList.add('is-page-visible'));
+
+    const eligibleLink = (link) => {
+      const target = link.getAttribute('target');
+      if (target && target !== '_self') return false;
+
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return false;
+
+      const url = new URL(href, window.location.href);
+      return url.origin === window.location.origin;
+    };
+
+    const navigateWithFade = (href) => {
+      body.classList.remove('is-page-visible');
+      body.classList.add('is-page-fading');
+
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        window.location.href = href;
+      };
+
+      const fallback = setTimeout(go, 500);
+
+      const onEnd = (e) => {
+        if (e.target !== body) return;
+        clearTimeout(fallback);
+        body.removeEventListener('transitionend', onEnd);
+        go();
+      };
+
+      body.addEventListener('transitionend', onEnd);
+    };
+
+    const prefetched = new Set();
+    const prefetch = (href) => {
+      if (prefetched.has(href)) return;
+      prefetched.add(href);
+
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const attachPrefetch = (link) => {
+      const maybePrefetch = () => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin === window.location.origin) prefetch(link.href);
+      };
+
+      link.addEventListener('mouseenter', maybePrefetch, { passive: true });
+      link.addEventListener('touchstart', maybePrefetch, { passive: true });
+    };
+
+    const onClick = (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      ) return;
+
+      const link = event.currentTarget;
+      if (!eligibleLink(link)) return;
+
+      const href = link.href;
+      if (href === window.location.href) return;
+
+      if (document.startViewTransition) {
+        event.preventDefault();
+        document.startViewTransition(() => { window.location.href = href; });
+        return;
+      }
+
+      event.preventDefault();
+      navigateWithFade(href);
+    };
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.addEventListener('click', onClick, { passive: false });
+      attachPrefetch(link);
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        body.classList.add('is-page-visible');
+        body.classList.remove('is-page-fading');
+      }
+    });
+  })();
+
   // ===== Global loud logging =====
   window.addEventListener('error', (e) => {
     console.error('[window.onerror]', e.message, `${e.filename}:${e.lineno}:${e.colno}`, e.error);
@@ -803,11 +1060,20 @@ header.ripple span.figtree-adrift {
   const mainContent = document.querySelector('.main-content');
   const enterBtn = document.getElementById('enterBtn');
   const doubtCounter = document.getElementById('doubt-counter');
+  const rootEl = document.documentElement;
   const viewToggle = document.querySelector('.view-toggle');
   const viewToggleButtons = viewToggle ? viewToggle.querySelectorAll('.view-toggle__option') : [];
   const supportColumn = document.querySelector('.support-column');
   const supportList = document.getElementById('supportList');
   const hintEl = document.querySelector('.hint');
+  const sessionSkipIntro = (() => {
+    try { return sessionStorage.getItem('skipIntro') === '1'; } catch (_) { return false; }
+  })();
+  const shouldSkipIntro = new URLSearchParams(window.location.search).get('skipIntro') === '1' || window.location.hash === '#app' || sessionSkipIntro;
+
+  if (!shouldSkipIntro) {
+    rootEl.classList.add('intro-active');
+  }
 
   let SUPPORT_NOTES = [];
   let ACTIVE_SUPPORT_NOTES = [];
@@ -1148,7 +1414,7 @@ header.ripple span.figtree-adrift {
       if (doubtCounter) {
         doubtCounter.style.visibility = 'visible';
         if (count > 0) animateDoubtCounter(doubtCounter, count);
-        else doubtCounter.textContent = '0 boats released';
+        else doubtCounter.textContent = '0 notes released';
       }
     } catch(err){
       console.error('Data preload failed:', err);
@@ -1188,7 +1454,40 @@ header.ripple span.figtree-adrift {
   }
   /* === end preload helpers === */
 
-  function revealMainContent() {
+  let enterStarted = false;
+
+  async function runEnterFlow(){
+    if (enterStarted) return;
+    if (enterBtn && enterBtn.disabled) return;
+    enterStarted = true;
+
+    setLoadingUI(true);
+    try {
+      await preloadAll();   // preload video, audio (buffer only), fonts, rain.js (best effort), data + seed boats
+    } finally {
+      setLoadingUI(false);
+    }
+
+    // Ensure the video is actually playing and mark it ready so boats draw immediately
+    try {
+      boatVideo.muted = true;
+      await boatVideo.play().catch(() => {});
+      if (boatVideo.readyState >= 2) {
+        videoReady = true; // let Boat.draw() run now
+      } else {
+        boatVideo.addEventListener('loadeddata', () => { videoReady = true; }, { once: true });
+      }
+    } catch (_) {}
+
+    // Safety: make sure we have boats before revealing
+    if (!boats || !boats.length) {
+      boats = Array.from({ length: BOAT_COUNT }, () => new Boat(getCurrentVariant()));
+    }
+
+    revealMainContent(); // fade intro only after we've armed drawing
+  }
+
+  function revealMainContent(immediate = false) {
     if (!introOverlay || introOverlay.classList.contains('fade-out')) return;
     if (introText) {
       introText.classList.add('fade-out-text');
@@ -1197,39 +1496,27 @@ header.ripple span.figtree-adrift {
     if (mainContent) {
       mainContent.classList.add('visible');
     }
+    const removalDelay = immediate ? 300 : 1200;
+    if (immediate) {
+      introOverlay.style.transitionDuration = '0.35s';
+      introOverlay.style.opacity = '0';
+    }
     setTimeout(() => {
       introOverlay.remove();
-    }, 1200);
+      if (rootEl) {
+        rootEl.classList.remove('intro-active');
+      }
+    }, removalDelay);
   }
 
   if (enterBtn) {
-    enterBtn.addEventListener('click', async () => {
-      if (enterBtn.disabled) return;
-      setLoadingUI(true);
-      try {
-        await preloadAll();   // preload video, audio (buffer only), fonts, rain.js (best effort), data + seed boats
-      } finally {
-  setLoadingUI(false);
-
-  // Ensure the video is actually playing and mark it ready so boats draw immediately
-  try {
-    boatVideo.muted = true;
-    await boatVideo.play().catch(() => {});
-    if (boatVideo.readyState >= 2) {
-      videoReady = true; // let Boat.draw() run now
-    } else {
-      boatVideo.addEventListener('loadeddata', () => { videoReady = true; }, { once: true });
-    }
-  } catch (_) {}
-
-  // Safety: make sure we have boats before revealing
-  if (!boats || !boats.length) {
-    boats = Array.from({ length: BOAT_COUNT }, () => new Boat(getCurrentVariant()));
+    enterBtn.addEventListener('click', runEnterFlow);
   }
 
-  revealMainContent(); // fade intro only after we've armed drawing
-}
-    });
+  if (shouldSkipIntro) {
+    try { sessionStorage.removeItem('skipIntro'); } catch (_) {}
+    revealMainContent(true);
+    runEnterFlow();
   }
 
   /* =====================
@@ -1302,9 +1589,10 @@ async function fetchTotalDoubts() {
     Prefer: 'count=exact'
   };
 
-  const [doubtsResult, supportResult] = await Promise.allSettled([
+  const [doubtsResult, supportResult, resolutionsResult] = await Promise.allSettled([
     fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&approved=is.true`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.true`, { headers })
+    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.true`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.null&approved=is.null&resolution=is.true`, { headers })
   ]);
 
   const parseCount = (result) => {
@@ -1315,7 +1603,7 @@ async function fetchTotalDoubts() {
     return Number.isFinite(total) ? total : 0;
   };
 
-  return parseCount(doubtsResult) + parseCount(supportResult);
+  return parseCount(doubtsResult) + parseCount(supportResult) + parseCount(resolutionsResult);
 }
 
 async function fetchSupportNotes(limit = 400) {
@@ -1385,7 +1673,7 @@ function animateDoubtCounter(el, targetValue) {
   const finalValue = Math.max(0, targetValue);
   const startValue = Number(el.dataset.startValue || 0);
   const formatter = new Intl.NumberFormat();
-  const formatValue = (value) => `${formatter.format(value)} boats released`;
+  const formatValue = (value) => `${formatter.format(value)} notes released`;
 
   if (finalValue <= startValue) {
     el.textContent = formatValue(finalValue);
@@ -1668,40 +1956,114 @@ async function postToWorker(text, token){
 
   /* ====== Media autoplay ====== */
 const DEFAULT_VOL = 0.28;
-function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
+const AUDIO_START_DELAY_MS = 2000;
+let audioStartTimer = null;
+
+function startAudio(){
+  if (audioStartTimer || !bgAudio.paused) return;
+
+  audioStartTimer = setTimeout(() => {
+    audioStartTimer = null;
+    bgAudio.volume = DEFAULT_VOL;
+    bgAudio.play().then(() => updateSoundUI(true)).catch(() => {});
+  }, AUDIO_START_DELAY_MS);
+}
+
+function cancelScheduledAudioStart(){
+  if (!audioStartTimer) return;
+  clearTimeout(audioStartTimer);
+  audioStartTimer = null;
+}
 function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
 
 let videoReady = false;
 let videoRestartAttempts = 0;
 const MAX_RESTART_ATTEMPTS = 2;
 let videoReadyCheckTimeoutId = null;
+let restartCheckWasPending = false;
+let videoWatchdogIntervalId = null;
+let lastVideoWatchTime = 0;
+const VIDEO_WATCHDOG_INTERVAL_MS = 4000;
+
+function stopVideoWatchdog() {
+  if (videoWatchdogIntervalId) {
+    clearInterval(videoWatchdogIntervalId);
+    videoWatchdogIntervalId = null;
+  }
+}
+
+function startVideoWatchdog() {
+  stopVideoWatchdog();
+  lastVideoWatchTime = boatVideo ? boatVideo.currentTime : 0;
+  videoWatchdogIntervalId = setInterval(() => {
+    if (!boatVideo || !videoReady) return;
+
+    const currentTime = boatVideo.currentTime;
+    const stalled = Math.abs(currentTime - lastVideoWatchTime) < 0.05;
+    const pausedWhileReady = boatVideo.paused;
+    lastVideoWatchTime = currentTime;
+
+    if ((stalled || pausedWhileReady) && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+      console.warn('Boat video appears stalled or paused, attempting safe restart');
+      const shouldCacheBust = stalled && videoRestartAttempts > 0;
+      attemptSafeVideoRestart({ cacheBust: shouldCacheBust });
+    }
+  }, VIDEO_WATCHDOG_INTERVAL_MS);
+}
+
+function resetVideoWatchdog() {
+  startVideoWatchdog();
+}
+
+function markVideoReadyIfPlayable() {
+  if (boatVideo && boatVideo.readyState >= 2) {
+    videoReady = true;
+    if (videoReadyCheckTimeoutId) {
+      clearTimeout(videoReadyCheckTimeoutId);
+      videoReadyCheckTimeoutId = null;
+    }
+    startVideoWatchdog();
+  }
+}
 
 boatVideo.addEventListener('canplay', () => {
-  videoReady = true;
-  if (videoReadyCheckTimeoutId) {
-    clearTimeout(videoReadyCheckTimeoutId);
-    videoReadyCheckTimeoutId = null;
-  }
+  markVideoReadyIfPlayable();
   if (boatVideo.paused) {
     boatVideo.play().catch(() => {});
   }
 });
 
+function attemptSafeVideoRestart({ cacheBust = false } = {}) {
+  if (!boatVideo || videoRestartAttempts >= MAX_RESTART_ATTEMPTS) return;
+
+  const currentSrc = activeBoatVideoSrc || boatVideo.currentSrc || boatVideo.src;
+  const newSrc = cacheBust ? `${currentSrc}${currentSrc.includes('?') ? '&' : '?'}t=${Date.now()}` : currentSrc;
+
+  videoRestartAttempts++;
+  videoReady = false;
+  stopVideoWatchdog();
+
+  boatVideo.pause();
+  boatVideo.src = '';
+  boatVideo.load();
+  boatVideo.src = newSrc;
+  boatVideo.load();
+
+  setTimeout(() => {
+    boatVideo.play().catch(() => {
+      console.error('Video restart failed');
+    });
+  }, 200);
+
+  scheduleVideoReadyCheck();
+  resetVideoWatchdog();
+}
+
 function checkAndRestartVideo() {
   if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+    const shouldCacheBust = videoRestartAttempts > 0;
     console.warn(`Video not ready after timeout, attempting restart ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
-    videoRestartAttempts++;
-
-    const currentSrc = boatVideo.src;
-    boatVideo.src = '';
-    boatVideo.load();
-    boatVideo.src = currentSrc + '?t=' + Date.now();
-
-    setTimeout(() => {
-      boatVideo.play().catch(() => {
-        console.error('Video restart failed');
-      });
-    }, 500);
+    attemptSafeVideoRestart({ cacheBust: shouldCacheBust });
 
     if (videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
       setTimeout(checkAndRestartVideo, 8000);
@@ -1734,16 +2096,20 @@ function updateBoatVideoSource(view) {
     videoReadyCheckTimeoutId = null;
   }
 
+  stopVideoWatchdog();
+
   boatVideo.pause();
   boatVideo.src = desiredSrc;
   boatVideo.load();
   boatVideo.play().catch(() => {});
   scheduleVideoReadyCheck();
+  resetVideoWatchdog();
 }
 
 // Start immediately, don't wait
 boatVideo.play().catch(() => {});
 scheduleVideoReadyCheck();
+startVideoWatchdog();
 
 /* ==== CHANGED: don’t start audio when clicking Enter ==== */
 let audioStarted = false;
@@ -1772,8 +2138,43 @@ addEventListener('pointerdown', ensurePlay);
 addEventListener('keydown', ensurePlay);
 /* ==== end change ==== */
 
-soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAudio.paused){ bgAudio.play().catch(()=>{}); } });
+soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { cancelScheduledAudioStart(); bgAudio.pause(); updateSoundUI(false); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (videoReadyCheckTimeoutId) {
+      clearTimeout(videoReadyCheckTimeoutId);
+      videoReadyCheckTimeoutId = null;
+      restartCheckWasPending = true;
+    }
+    stopVideoWatchdog();
+    return;
+  }
+
+  if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
+  markVideoReadyIfPlayable();
+  boatVideo.play().catch(() => {});
+
+  if (!videoReady || restartCheckWasPending) {
+    scheduleVideoReadyCheck();
+  }
+  restartCheckWasPending = false;
+  resetVideoWatchdog();
+});
+
+addEventListener('pageshow', (event) => {
+  const navigationEntry = performance?.getEntriesByType?.('navigation')?.[0];
+  const isReload = navigationEntry ? navigationEntry.type === 'reload' : false;
+  if (isReload && !event.persisted) return;
+
+  markVideoReadyIfPlayable();
+  boatVideo.play().catch(() => {});
+  if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
+
+  if (!videoReady) {
+    scheduleVideoReadyCheck();
+  }
+  resetVideoWatchdog();
+});
 
   /* ===== Boats ===== */
   const CROP = {x:0, y:0, w:1, h:1};
@@ -1789,84 +2190,83 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !bgAu
   const OPACITY_MAX = 0.95;
 
   // Holds fetched approved doubts and session tracking
-let APPROVED_DOUBTS = [];
-let USED_DOUBT_IDS = new Set(); // Track used doubts this session
-let SHUFFLED_DOUBTS = []; // Pre-shuffled pool for current session
+  let APPROVED_DOUBTS = [];
+  let USED_DOUBT_IDS = new Set(); // Track used doubts this session
+  let SHUFFLED_DOUBTS = []; // Pre-shuffled pool for current session
 
-function shuffleArray(array) {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function initializeDoubtPool() {
-  // Double shuffle for more randomness
-  let shuffled = shuffleArray(APPROVED_DOUBTS);
-  
-  // Start from a random position in the shuffled array
-  const randomStart = Math.floor(Math.random() * shuffled.length);
-  shuffled = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
-  
-  SHUFFLED_DOUBTS = shuffled;
-  USED_DOUBT_IDS.clear();
-  console.log('Initialized shuffled doubt pool:', SHUFFLED_DOUBTS.length, 'doubts');
-}
-
-function pickRandomDoubt() {
-  if (APPROVED_DOUBTS.length === 0) {
-    // Safe placeholder if fetch returns nothing (or before it completes)
-    return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
-  }
-
-  // If we've used all doubts, reinitialize the pool
-  if (USED_DOUBT_IDS.size >= APPROVED_DOUBTS.length) {
-    console.log('All doubts used, reshuffling pool');
-    initializeDoubtPool();
-  }
-
-  // Find the next unused doubt from our shuffled pool
-  let selectedDoubt = null;
-  for (const doubt of SHUFFLED_DOUBTS) {
-    if (!USED_DOUBT_IDS.has(doubt.id)) {
-      selectedDoubt = doubt;
-      USED_DOUBT_IDS.add(selectedDoubt.id);
-      break;
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    return shuffled;
   }
 
-  // Fallback (shouldn't happen with the logic above)
-  if (!selectedDoubt) {
-    selectedDoubt = SHUFFLED_DOUBTS[0];
-    USED_DOUBT_IDS.add(selectedDoubt.id);
+  function initializeDoubtPool() {
+    // Double shuffle for more randomness
+    let shuffled = shuffleArray(APPROVED_DOUBTS);
+
+    // Start from a random position in the shuffled array
+    const randomStart = Math.floor(Math.random() * shuffled.length);
+    shuffled = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
+
+    SHUFFLED_DOUBTS = shuffled;
+    USED_DOUBT_IDS.clear();
+    console.log('Initialized shuffled doubt pool:', SHUFFLED_DOUBTS.length, 'doubts');
   }
 
-  return selectedDoubt;
-}
+  function pickRandomDoubt() {
+    if (APPROVED_DOUBTS.length === 0) {
+      // Safe placeholder if fetch returns nothing (or before it completes)
+      return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
+    }
 
+    // If we've used all doubts, reinitialize the pool
+    if (USED_DOUBT_IDS.size >= APPROVED_DOUBTS.length) {
+      console.log('All doubts used, reshuffling pool');
+      initializeDoubtPool();
+    }
 
-  async function refreshDoubtPool() {
-  try {
-    const freshDoubts = await fetchApprovedDoubts(80);
-    if (freshDoubts.length > 0) {
-      const oldLength = APPROVED_DOUBTS.length;
-      APPROVED_DOUBTS = freshDoubts;
-      
-      // Only reinitialize if we got significantly more doubts
-      if (freshDoubts.length > oldLength * 1.2) {
-        initializeDoubtPool();
-        console.log('Refreshed and reshuffled doubt pool:', APPROVED_DOUBTS.length, 'doubts');
-      } else {
-        console.log('Refreshed doubt pool:', APPROVED_DOUBTS.length, 'doubts');
+    // Find the next unused doubt from our shuffled pool
+    let selectedDoubt = null;
+    for (const doubt of SHUFFLED_DOUBTS) {
+      if (!USED_DOUBT_IDS.has(doubt.id)) {
+        selectedDoubt = doubt;
+        USED_DOUBT_IDS.add(selectedDoubt.id);
+        break;
       }
     }
-  } catch (err) {
-    console.error('Failed to refresh doubts:', err);
-    // Keep using existing doubts if refresh fails
+
+    // Fallback (shouldn't happen with the logic above)
+    if (!selectedDoubt) {
+      selectedDoubt = SHUFFLED_DOUBTS[0];
+      USED_DOUBT_IDS.add(selectedDoubt.id);
+    }
+
+    return selectedDoubt;
   }
-}
+
+  async function refreshDoubtPool() {
+    try {
+      const freshDoubts = await fetchApprovedDoubts(80);
+      if (freshDoubts.length > 0) {
+        const oldLength = APPROVED_DOUBTS.length;
+        APPROVED_DOUBTS = freshDoubts;
+
+        // Only reinitialize if we got significantly more doubts
+        if (freshDoubts.length > oldLength * 1.2) {
+          initializeDoubtPool();
+          console.log('Refreshed and reshuffled doubt pool:', APPROVED_DOUBTS.length, 'doubts');
+        } else {
+          console.log('Refreshed doubt pool:', APPROVED_DOUBTS.length, 'doubts');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh doubts:', err);
+      // Keep using existing doubts if refresh fails
+    }
+  }
 
 
   class Boat{
@@ -1988,25 +2388,45 @@ function pickRandomDoubt() {
       }
 
       const ua = navigator.userAgent;
-        const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
 
-      if (isWebKit) {
+const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+
+
+
+if (isWebKit) {
+
   const dpr = window.devicePixelRatio || 1;
+
   const offCanvas = document.createElement('canvas');
+
   offCanvas.width  = displayW * dpr;
+
   offCanvas.height = displayH * dpr;
+
   const offCtx = offCanvas.getContext('2d');
+
   offCtx.scale(dpr, dpr);
+
   offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
 
+
+
   ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
-  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
+
+  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayHeight);
+
   ctx.globalCompositeOperation = 'source-over';
+
 } else {
+
   const prev = ctx.globalCompositeOperation;
+
   ctx.globalCompositeOperation = 'screen';
+
   ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW/2, -displayH/2, displayW, displayH);
+
   ctx.globalCompositeOperation = prev;
+
 }
 
 
@@ -2431,7 +2851,7 @@ fetchTotalDoubts().then(count => {
   if (count > 0) {
     animateDoubtCounter(doubtCounter, count);
   } else {
-    doubtCounter.textContent = '0 boats released';
+    doubtCounter.textContent = '0 notes released';
   }
 }).catch(() => {
   if (doubtCounter) doubtCounter.style.visibility = 'hidden';

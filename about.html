@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About — Adrift</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&family=Dongle&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" sizes="16x16" href="favicon-adrift-16x16.svg">
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="favicon-adrift-32x32.svg">
+  <link rel="shortcut icon" href="favicon-adrift-32x32.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./menu.css">
+  <style>
+    :root {
+      --bg: #000;
+      --paper: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #ececed;
+      --muted: rgba(236, 236, 237, 0.76);
+      --accent: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      opacity: 0;
+      transition: opacity 120ms ease-out;
+    }
+
+    body.is-page-visible {
+      opacity: 1;
+    }
+
+    body.is-page-fading {
+      opacity: 0;
+    }
+    header {
+      font-weight: 400;
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      letter-spacing: 0.25em;
+      font-size: 20px;
+      font-family: "Dongle", ui-sans-serif, system-ui, sans-serif;
+      text-transform: uppercase;
+      text-align: center;
+      user-select: none;
+      z-index: 5;
+    }
+    
+    .top-nav {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      z-index: 5;
+      display: flex;
+      gap: 12px;
+    }
+    .top-nav__link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ececed;
+      text-decoration: none;
+      font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: none;
+      padding: 8px 2px;
+      font-weight: 400;
+      transition: color 0.2s ease, font-weight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .top-nav__link:hover, .top-nav__link:focus-visible {
+      outline: none;
+      font-weight: 500;
+    }
+    .top-nav__link.is-active {
+      font-weight: 500;
+    }
+
+    .top-nav__tag {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 8px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgb(252 171 43);
+      color: #000;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+      transform: translateY(-4px);
+    }
+    .page {
+      width: min(760px, 100%);
+      padding: 140px 22px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      min-height: 100vh;
+    }
+    .content {
+      width: 100%;
+      max-width: 670px;
+      text-align: left;
+    }
+    .site-footer {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      font-weight: 400;
+      color: #9aa0a8;
+      opacity: 0.8;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.02);
+      backdrop-filter: blur(3px);
+      margin: 24px auto 32px;
+      align-self: center;
+    }
+    .site-footer a {
+      color: #b7bdc5;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      transition: color .25s ease, border-color .25s ease;
+    }
+    .site-footer a:hover,
+    .site-footer a:focus-visible {
+      color: #ececed;
+      border-bottom-color: rgba(255,255,255,.4);
+      outline: none;
+    }
+    .blurb {
+      font-size: 16px;
+      line-height: 1.8;
+      color: rgb(255 255 255 / 76%);
+      margin: 0 0 18px;
+      font-weight: 400;
+    }
+    .support-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0 4px;
+      padding: 28px 36px;
+      border-radius: 9999px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: #fff;
+      color: #0b0b0f;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      font-size: 13px;
+      backdrop-filter: blur(3px);
+      transition: box-shadow .25s ease, transform .2s ease, border-color .25s ease, background .25s ease;
+      cursor: pointer;
+      user-select: none;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .support-link svg { width: 16px; height: 16px; }
+    .support-link:hover, .support-link:focus-visible {
+      border-color: rgba(0, 0, 0, 0.1);
+      background: #f1f1f4;
+      box-shadow: 0 0 18px 8px rgba(255, 255, 255, 0.32), 0 0 12px 2px rgba(11, 11, 15, 0.12);
+      outline: none;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+    }
+    .back-link:hover, .back-link:focus-visible {
+      background: rgba(255,255,255,0.04);
+      outline: none;
+    }
+
+    /* --- Added: font smoothing, Figtree font, and ripple effect --- */
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+
+    .figtree-adrift {
+      font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 600;
+      font-style: normal;
+    }
+
+    .dongle-regular {
+      font-family: "Dongle", sans-serif;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+
+    .ripple > * {
+      display: inline-block;
+      text-shadow: 0 0 0 #fff;
+      color: transparent;
+    }
+
+    .ripple a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .ripple a:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 6px;
+    }
+
+    @keyframes rippleEffect {
+      40% {
+        opacity: .35;
+      }
+      50% {
+        transform: translate3d(.5em, 0, 0) scale(1.1);
+        text-shadow: 0 0 20px #fff;
+      }
+      75% {
+        transform: translate3d(0, 0, 0) scale(1);
+        text-shadow: 0 0 0 #fff;
+        opacity: 1;
+      }
+    }
+    /* --- end added --- */
+
+    /* --- Added: ensure header uses Figtree --- */
+    header.ripple span.figtree-adrift {
+      font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+      font-weight: 700;
+    }
+    /* --- end added --- */
+    @media (max-width: 640px) {
+      header { top: 10px; }
+      .top-nav { top: 10px; right: 10px; }
+      .top-nav__link { padding: 8px 0; }
+      .page { padding: 110px 18px 40px; }
+    }
+
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open navigation">
+    <span class="menu-toggle__bars">
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+    </span>
+  </button>
+  <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+    <div class="menu-overlay__content">
+      <div class="menu-overlay__links" role="navigation" aria-label="Primary navigation">
+        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">NEW</span></a>
+        <a class="menu-link" href="about.html">About</a>
+      </div>
+      <div class="menu-overlay__hint">Tap anywhere to close</div>
+    </div>
+  </div>
+<header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
+    <div class="page">
+      <div class="content">
+        <p class="blurb">Adrift began as a quiet corner where you could release doubt without needing answers or explanations. It was simply a space to be honest, to be human, and to feel a little less alone.</p>
+      <p class="blurb">Over time, it became something shared. People began leaving not only their uncertainties, but also small offerings of care. Words of encouragement. Gentle reminders meant for strangers they would never meet.</p>
+      <p class="blurb">Today, Adrift is a living side project where doubt and hope are allowed to sit together. It is shaped by those who pass through it, and by the simple belief that even the smallest messages can matter.</p>
+      <p class="blurb">If this resonates with you, consider donating to help keep this space here for others. Thank you for being here.</p>
+      <div style="text-align: center;">
+        <a class="support-link" href="https://ko-fi.com/adriftsite" target="_blank" rel="noreferrer noopener">
+          Support Adrift
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </a>
+      </div>
+      </div>
+    </div>
+  <script>
+  (() => {
+    const body = document.body;
+
+    requestAnimationFrame(() => body.classList.add('is-page-visible'));
+
+    const eligibleLink = (link) => {
+      const target = link.getAttribute('target');
+      if (target && target !== '_self') return false;
+
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return false;
+
+      const url = new URL(href, window.location.href);
+      return url.origin === window.location.origin;
+    };
+
+    const navigateWithFade = (href) => {
+      body.classList.remove('is-page-visible');
+      body.classList.add('is-page-fading');
+
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        window.location.href = href;
+      };
+
+      const fallback = setTimeout(go, 500);
+
+      const onEnd = (e) => {
+        if (e.target !== body) return;
+        clearTimeout(fallback);
+        body.removeEventListener('transitionend', onEnd);
+        go();
+      };
+
+      body.addEventListener('transitionend', onEnd);
+    };
+
+    const prefetched = new Set();
+    const prefetch = (href) => {
+      if (prefetched.has(href)) return;
+      prefetched.add(href);
+
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const attachPrefetch = (link) => {
+      const maybePrefetch = () => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin === window.location.origin) prefetch(link.href);
+      };
+
+      link.addEventListener('mouseenter', maybePrefetch, { passive: true });
+      link.addEventListener('touchstart', maybePrefetch, { passive: true });
+    };
+
+    const onClick = (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      ) return;
+
+      const link = event.currentTarget;
+      if (!eligibleLink(link)) return;
+
+      const href = link.href;
+      if (href === window.location.href) return;
+
+      if (document.startViewTransition) {
+        event.preventDefault();
+        document.startViewTransition(() => { window.location.href = href; });
+        return;
+      }
+
+      event.preventDefault();
+      navigateWithFade(href);
+    };
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.addEventListener('click', onClick, { passive: false });
+      attachPrefetch(link);
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        body.classList.add('is-page-visible');
+        body.classList.remove('is-page-fading');
+      }
+    });
+  })();
+
+  // Persist intro skip for return navigation so the main page opens immediately
+  (() => {
+    const skipLinks = document.querySelectorAll('[data-skip-intro-link]');
+    skipLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        try {
+          sessionStorage.setItem('skipIntro', '1');
+        } catch (_) {}
+      });
+    });
+  })();
+  </script>
+
+<script>
+(() => {
+  const header = document.querySelector('header.ripple');
+  if (!header) return;
+
+  const frames = [
+    { opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' },
+    { offset: 0.4, opacity: 0.35 },
+    { offset: 0.5, opacity: 1, transform: 'translate3d(0.5em,0,0) scale(1.1)', textShadow: '0 0 20px #fff' },
+    { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
+  ];
+
+const letters = [...header.querySelectorAll(':scope > span > span')];
+  const anims = letters.map((el, i) => {
+    const a = el.animate(frames, {
+      duration: 4000,
+      fill: 'both',
+      delay: i * 60 // optional stagger
+    });
+    a.pause();
+    return a;
+  });
+
+  header.addEventListener('mouseenter', () => {
+    anims.forEach(a => { a.playbackRate = 1; a.play(); });
+  });
+
+  header.addEventListener('mouseleave', () => {
+    anims.forEach(a => a.reverse());
+  });
+})();
+</script>
+<script src="./menu.js" defer></script>
+</body>
+</html>

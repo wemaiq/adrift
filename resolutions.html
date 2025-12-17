@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H3F6SJKBRK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-H3F6SJKBRK');
+</script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dongle&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./menu.css">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<!-- SEO + AEO Metadata -->
+<title>Resolutions — Adrift</title>
+<meta name="description" content="Adrift Resolutions is a quiet digital space where people can anonymously share their resolutions and dreams as paper boats.">
+<meta name="keywords" content="resolutions, goals, aspirations, paper boats, quiet space, dreams">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Resolutions — Adrift">
+<meta property="og:description" content="A quiet place to anonymously share your resolutions and dreams as paper boats.">
+<meta property="og:url" content="https://adrift.site/resolutions.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://adrift.site/Opengraph-adrift.jpg">
+<meta property="og:image:secure_url" content="https://adrift.site/Opengraph-adrift.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Resolutions — Adrift">
+<meta name="twitter:description" content="Adrift Resolutions is a quiet space where resolutions drift as paper boats — shared anonymously, read quietly.">
+<meta name="twitter:image" content="https://adrift.site/Opengraph-adrift.jpg">
+
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" sizes="16x16" href="favicon-adrift-16x16.svg">
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="favicon-adrift-32x32.svg">
+<link rel="shortcut icon" href="favicon-adrift-32x32.svg" type="image/svg+xml">
+
+<style>
+  :root{
+    --paper-edge: #e8e3da;
+    --paper-face: #e8e3da;
+    --bloom-a: rgba(220, 211, 199, 0.40);
+    --bloom-b: rgba(220, 211, 199, 0.40);
+  }
+
+  html, body { height:100%; }
+  body {
+    margin:0;
+    background:#000;
+    overflow:hidden;
+    font-family: ui-sans-serif, system-ui;
+    color:#ececed;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+  }
+
+  body.is-page-visible { opacity: 1; }
+  body.is-page-fading { opacity: 0; }
+
+  canvas { display:block; width:100%; height:100%; }
+
+  /* Layering: rain over boats (click-through), boats under notes */
+  #rain  { position:fixed; inset:0; z-index:2; pointer-events:none; }
+  #canvas{ position:fixed; inset:0; z-index:1; }
+
+  #embers-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+  header{ font-weight:400; position:fixed; top:18px; left:50%; transform:translateX(-50%); letter-spacing:0.25em; font-size:20px; font-family:"Dongle", ui-sans-serif, system-ui, sans-serif;text-transform:uppercase; text-align:center; user-select:none; z-index:5; display:flex; flex-direction:column; align-items:center; gap:2px; }
+
+  .new-badge {
+    display: inline-block;
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ececed;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: transparent;
+  }
+  
+  .top-nav {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .top-nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ececed;
+    text-decoration: none;
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    padding: 8px 2px;
+    font-weight: 400;
+    transition: color 0.2s ease, font-weight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .top-nav__link:hover,
+  .top-nav__link:focus-visible {
+    outline: none;
+    font-weight: 500;
+  }
+
+  .top-nav__link.is-active {
+    font-weight: 500;
+  }
+
+  .hint{ font-weight:400; position:fixed; left:20px; bottom:16px; color:#9aa0a8; font-size:12px; opacity:.7; user-select:none; background: rgba(255,255,255,.03); letter-spacing: 0.05em; padding: 8px 10px; border-radius: 10px; backdrop-filter: blur(3px); z-index:5; }
+
+  /* Sound toggle */
+  .sound-toggle{
+    position:fixed; right:20px; bottom:16px; z-index:5;
+    background: rgba(255,255,255,.03);
+    color:#9aa0a8; font-size:12px; line-height:1;
+    padding:8px 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(3px);
+    cursor:pointer; user-select:none;
+    letter-spacing: 0.05em;
+  }
+  .sound-toggle.active{ color:#ececed; border-color: rgba(255,255,255,.12); }
+  .sound-toggle:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.25); outline-offset:2px; }
+
+  @media (max-width: 640px) {
+    .hint { bottom: 48px; }
+    .sound-toggle { bottom: 48px; }
+    .site-footer { bottom: 16px; }
+  }
+
+  /* Center-bottom CTA */
+  .cta-btn{
+    padding:28px 36px; border-radius:9999px; font-size:13px; line-height:1; color:#fff;
+    letter-spacing: 0.05em;
+    border:1px solid rgba(255,255,255,.28);
+    background: rgba(255,255,255,.04);
+    backdrop-filter: blur(3px);
+    transition: box-shadow .25s ease, transform .2s ease, border-color .25s ease, background .25s ease;
+    cursor:pointer; user-select:none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .cta-btn--floating {
+    position:fixed; left:50%; transform:translateX(-50%); bottom:56px; z-index:5;
+  }
+  .cta-btn:hover{ box-shadow: 0 0 36px 12px rgba(255, 219, 90, 0.174), 0 0 8px 2px rgba(255,255,255,.25); border-color: rgba(255,255,255,.5); }
+  .cta-btn:focus-visible{ outline:2px solid rgba(255, 200, 100, 0.35); outline-offset:3px; }
+
+  /* Hidden media */
+  #boatVideo, #bgAudio { position: fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+  /* ===========================================================
+     Unfolding NOTE (used for both boat view + composer)
+     =========================================================== */
+  .note-overlay { position: fixed; inset:0; z-index:6; pointer-events:none; }
+  .overlay-close { position:fixed; inset:0; background: transparent; pointer-events:auto; }
+
+  .note{
+    position:absolute;
+    width: min(350px, 90vw); 
+    height: min(350px, 90vw);
+    transform-style: preserve-3d; perspective: 800px;
+    pointer-events:auto;
+    filter: drop-shadow(0 12px 40px rgba(0,0,0,.55));
+    transition: transform .35s ease, opacity .25s ease;
+    cursor: grab;
+    user-select: none; touch-action: none;
+    will-change: left, top, opacity, transform;
+    background: transparent;
+  }
+  .note.dragging{ cursor: grabbing; }
+  .note.closing{ opacity:0; transform: scale(.98) translateZ(0); pointer-events:none; }
+
+  .note-close{
+    position:absolute; top:10px; right:10px;
+    width:28px; height:28px;
+    border-radius:50%;
+    aspect-ratio: 1 / 1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(12,14,18,.65);
+    color:#fff; font-size:16px; line-height:1;
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:none;
+    cursor:pointer;
+    opacity:0; 
+    pointer-events:none;
+    transition: opacity .25s ease, transform .20s ease, background .2s ease, border-color .2s ease;
+    z-index:3;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-align: center;
+    transform: scale(.92) translateZ(0);
+    -webkit-transform: scale(.92) translateZ(0);
+  }
+  .note.unfold .note-close{
+    opacity:1; transform: scale(1) translateZ(0);
+    transition-delay: 1.25s, 1.25s, 0s, 0s;
+    pointer-events:auto;
+  }
+  .note-close:hover{ transform: scale(1.06) translateZ(0); background: rgba(12,14,18,.78); border-color: rgba(255,255,255,.28); }
+  .note-close:active{ transform: scale(.98) translateZ(0); }
+  .note-close:focus-visible{ outline:2px solid rgba(255, 180, 60, 0.5); outline-offset:2px; }
+
+  .note-stage, .note-frame {
+    position:absolute; left:50%; top:50%; transform:translate(-50%, -50%);
+    width:100%; height:100%;
+  }
+  .note-frame{
+    opacity:0;
+    box-shadow: 0 0 40px rgba(0,0,0,0.06);
+    animation: note-show 0.5s 1s ease forwards;
+  }
+
+  .note-box{
+    position:absolute;
+    width:calc(50% - 25px); height:calc(50% - 25px);
+    background: var(--paper-face);
+    border: 25px solid var(--paper-edge);
+    box-shadow: 0 0 40px rgba(0,0,0,0.07);
+    overflow:hidden; border-radius:4px;
+  }
+  .note-box .note-in{
+    position:absolute; width:100px; height:100px; border-radius:50%;
+    background: transparent !important;
+    animation: note-grow 0.5s 3s cubic-bezier(0.66,-0.30,0.66,1) forwards;
+  }
+  .note-box .one{ left:100px; bottom:-50px; }
+  .note-box .two{ left:-50px;  bottom:-50px; }
+  .note-box .thr{ left:100px; bottom:100px; }
+  .note-box .fou{ left:-50px;  bottom:100px; }
+
+  .note-box:nth-child(1){ border-right:none; border-bottom:none; border-radius: 5px 0 0 0; animation: note-clr 0.5s 0.5s ease forwards; }
+  .note-box:nth-child(2){ left:50%; border-left:none; border-bottom:none; border-radius: 0 5px 0 0; transform-origin: 0 0; transform: rotateY(180deg); animation: note-fold 0.5s 0.5s ease forwards; }
+  .note-box:nth-child(3){ top:50%; opacity:0; border-top:none; border-right:none; border-radius: 0 0 0 5px; transform: rotateX(180deg); transform-origin: 0 0; animation: note-fold2 0.5s 1s ease forwards; }
+  .note-box:nth-child(4){ top:50%; left:50%; opacity:0; border-top:none; border-left:none; border-radius: 0 0 5px 0; transform: rotateX(180deg); transform-origin: 0 0; animation: note-fold2 0.5s 1s ease forwards; }
+
+  .note-content{
+    position:absolute; inset:22px 24px;
+    display:flex; flex-direction:column; justify-content:flex-start;
+    color:#0e1520; opacity:0; transform: translateY(4px);
+    transition: opacity .45s ease 1.2s, transform .45s ease 1.2s;
+    font-synthesis-weight:none;
+    padding: 0;
+    background: transparent;
+  }
+  .note.unfold .note-content{ opacity:1; transform: translateY(0); }
+
+  .note-title{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#4c5562; margin-bottom:10px; }
+  .note-text{ font-size:20px; line-height:1.55; color:#10151c; }
+  .note-meta{ margin-top:14px; font-size:12px; color:#5a6472; }
+
+  @keyframes note-clr { 0%, 100% { background: var(--paper-face); } }
+  @keyframes note-fold { 0%, 99.99% { background: var(--paper-face); } 100% { background: var(--paper-face); transform: rotateY(360deg); } }
+  @keyframes note-fold2 { 0%{opacity:1;background:var(--paper-face);} 25%{opacity:1} 40%{opacity:1} 100%{opacity:1;background:var(--paper-face);transform: rotateX(0deg);} }
+  @keyframes note-show { to { opacity:1; } }
+
+  /* Composer form bits */
+  .compose-field{ width:100%; min-height:110px; resize:vertical; box-sizing:border-box; border-radius:8px; border:1px solid rgba(0,0,0,.1); padding:10px 12px; font: 16px/1.5 ui-sans-serif, system-ui; color:#0e1520; background:#fff; }
+  .compose-field:focus {
+    outline: none;
+    border-color: rgba(7, 7, 7, 0.4);
+    box-shadow: 0 0 0 1px rgba(255, 180, 60, 0.15);
+  }
+  .compose-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:12px; color:#4c5562; }
+  .compose-disclaimer {
+    font-size: 11px;
+    color: rgba(16,21,28,0.55);
+    text-align: center;
+    margin-top: 14px;
+  }
+  .pill-btn{ padding:12px 18px; border-radius:999px; border:1px solid rgba(0,0,0,.12); background:#0f172a; color:#fff; cursor:pointer; }
+  .pill-btn:focus-visible {
+    outline: 2px solid rgba(255, 180, 60, 0.5);
+    outline-offset: 2px;
+  }
+
+  .note .compose-field { touch-action: auto; user-select: text; }
+  .note .compose-foot button { touch-action: auto; }
+
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+
+  .figtree-adrift {
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .dongle-regular {
+    font-family: "Dongle", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .ripple > * {
+    display: inline-block;
+    text-shadow: 0 0 0 #fff;
+    color: transparent;
+  }
+
+  @keyframes rippleEffect {
+    40% {
+      opacity: .35;
+    }
+    50% {
+      transform: translate3d(.5em, 0, 0) scale(1.1);
+      text-shadow: 0 0 20px #fff;
+    }
+    75% {
+      transform: translate3d(0, 0, 0) scale(1);
+      text-shadow: 0 0 0 #fff;
+      opacity: 1;
+    }
+  }
+
+  header.ripple span.figtree-adrift {
+    font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  .new-badge span {
+    display: inline-block;
+    text-shadow: 0 0 0 #fff;
+    color: transparent;
+  }
+
+  .loading-dots { display:inline-flex; gap:.25em; margin-left:.4em; vertical-align:baseline; }
+  .loading-dots span { width:.35em; height:.35em; border-radius:50%; background: currentColor; opacity:.2; animation: dotBlink 1s infinite; }
+  .loading-dots span:nth-child(2){ animation-delay:.15s; }
+  .loading-dots span:nth-child(3){ animation-delay:.30s; }
+  @keyframes dotBlink {
+    0%, 20% { opacity:.2; transform: translateY(0); }
+    50%     { opacity:1;  transform: translateY(-1px); }
+    100%    { opacity:.2; transform: translateY(0); }
+  }
+
+  .site-footer {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+    color: #9aa0a8;
+    opacity: 0.8;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.02);
+    backdrop-filter: blur(3px);
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  .site-footer a {
+    color: #b7bdc5;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    transition: color .25s ease, border-color .25s ease;
+  }
+
+  .site-footer a:hover,
+  .site-footer a:focus-visible {
+    color: #ececed;
+    border-bottom-color: rgba(255,255,255,.4);
+    outline: none;
+  }
+
+  @media (max-width: 640px) {
+    .cta-btn {
+      padding: 20px 28px;
+      font-size: 12px;
+    }
+
+    .cta-btn--floating {
+      bottom: 90px;
+    }
+    
+    header {
+      font-size: 18px;
+    }
+
+    .top-nav {
+      top: 10px;
+      right: 12px;
+    }
+
+    .top-nav__link {
+      font-size: 12px;
+      padding: 8px 0;
+    }
+  }
+
+  @media (max-height: 500px) and (orientation: landscape) {
+    .hint { left: 10px; bottom: 40px;}
+    .sound-toggle { right: 10px; bottom: 40px; }
+    .cta-btn { padding: 16px 24px; }
+    .cta-btn--floating { bottom: 52px; }
+    header { top: 10px; }
+    .top-nav { top: 10px; right: 10px; }
+  }
+
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .note-close {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      backface-visibility: hidden;
+      transform-style: flat;
+    }
+  }
+</style>
+</head>
+<body class="figtree-adrift is-page-visible">
+  <button class="menu-toggle" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open navigation">
+    <span class="menu-toggle__bars">
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+    </span>
+  </button>
+  <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+    <div class="menu-overlay__content">
+      <div class="menu-overlay__links" role="navigation" aria-label="Primary navigation">
+        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">NEW</span></a>
+        <a class="menu-link" href="about.html">About</a>
+      </div>
+      <div class="menu-overlay__hint">Tap anywhere to close</div>
+    </div>
+  </div>
+  <canvas id="embers-canvas"></canvas>
+  <header class="ripple"><span><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></span><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>6</span></span></header>
+
+  <!-- media -->
+  <video id="boatVideo" src="lantern.mp4" loop="" muted="" playsinline="" preload="auto"></video>
+  <audio id="bgAudio" src="starlight.mp3" loop="" preload="auto"></audio>
+
+  <!-- layers -->
+  <canvas id="rain" aria-hidden="true"></canvas>
+  <canvas id="canvas"></canvas>
+
+  <div class="hint">Click lantern to unfold</div>
+  <button id="soundToggle" class="sound-toggle" aria-pressed="false" aria-label="Enable sound">Sound: Off</button>
+  <button id="releaseBtn" class="cta-btn cta-btn--floating" aria-label="Release your resolution">Write your resolution</button>
+  <footer class="site-footer">© 2025 Adrift. <a href="https://ko-fi.com/adriftsite" target="_blank" rel="noreferrer noopener">Help keep this alive.</a></footer>
+
+
+<script>
+  (() => {
+    const body = document.body;
+
+    requestAnimationFrame(() => body.classList.add('is-page-visible'));
+
+    const eligibleLink = (link) => {
+      const target = link.getAttribute('target');
+      if (target && target !== '_self') return false;
+
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return false;
+
+      const url = new URL(href, window.location.href);
+      return url.origin === window.location.origin;
+    };
+
+    const navigateWithFade = (href) => {
+      body.classList.remove('is-page-visible');
+      body.classList.add('is-page-fading');
+
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        window.location.href = href;
+      };
+
+      const fallback = setTimeout(go, 500);
+
+      const onEnd = (e) => {
+        if (e.target !== body) return;
+        clearTimeout(fallback);
+        body.removeEventListener('transitionend', onEnd);
+        go();
+      };
+
+      body.addEventListener('transitionend', onEnd);
+    };
+
+    const onClick = (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      ) return;
+
+      const link = event.currentTarget;
+      if (!eligibleLink(link)) return;
+
+      const href = link.href;
+      if (href === window.location.href) return;
+
+      event.preventDefault();
+      navigateWithFade(href);
+    };
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.addEventListener('click', onClick, { passive: false });
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        body.classList.add('is-page-visible');
+        body.classList.remove('is-page-fading');
+      }
+    });
+  })();
+
+  // ===== Global logging =====
+  window.addEventListener('error', (e) => {
+    console.error('[window.onerror]', e.message, `${e.filename}:${e.lineno}:${e.colno}`, e.error);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('[unhandledrejection]', e.reason);
+  });
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { alpha:true });
+  const boatVideo = document.getElementById('boatVideo');
+  const bgAudio = document.getElementById('bgAudio');
+  const soundToggle = document.getElementById('soundToggle');
+  const releaseBtn = document.getElementById('releaseBtn');
+  const hintEl = document.querySelector('.hint');
+
+  let W, H;
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    W = innerWidth;
+    H = innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  /* ====== Media autoplay ====== */
+  const DEFAULT_VOL = 0.28;
+  function startAudio(){ bgAudio.volume = DEFAULT_VOL; bgAudio.play().then(()=> updateSoundUI(true)).catch(()=>{}); }
+  function updateSoundUI(on){ soundToggle.classList.toggle('active', !!on); soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false'); soundToggle.textContent = on ? 'Sound: On' : 'Sound: Off'; }
+
+  let videoReady = false;
+  let videoRestartAttempts = 0;
+  const MAX_RESTART_ATTEMPTS = 2;
+  let videoReadyCheckTimeoutId = null;
+
+  function markVideoReadyIfPlayable() {
+    if (boatVideo && boatVideo.readyState >= 2) {
+      videoReady = true;
+      if (videoReadyCheckTimeoutId) {
+        clearTimeout(videoReadyCheckTimeoutId);
+        videoReadyCheckTimeoutId = null;
+      }
+    }
+  }
+
+  boatVideo.addEventListener('canplay', () => {
+    markVideoReadyIfPlayable();
+    if (boatVideo.paused) {
+      boatVideo.play().catch(() => {});
+    }
+  });
+
+  function checkAndRestartVideo() {
+    if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+      console.warn(`Video not ready after timeout, attempting restart ${videoRestartAttempts + 1}/${MAX_RESTART_ATTEMPTS}`);
+      videoRestartAttempts++;
+
+      const currentSrc = boatVideo.src;
+      boatVideo.src = '';
+      boatVideo.load();
+      boatVideo.src = currentSrc + '?t=' + Date.now();
+
+      setTimeout(() => {
+        boatVideo.play().catch(() => {
+          console.error('Video restart failed');
+        });
+      }, 500);
+
+      if (videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
+        setTimeout(checkAndRestartVideo, 8000);
+      }
+    }
+  }
+
+  function scheduleVideoReadyCheck() {
+    if (videoReadyCheckTimeoutId) {
+      clearTimeout(videoReadyCheckTimeoutId);
+    }
+    videoReadyCheckTimeoutId = setTimeout(() => {
+      if (!videoReady) {
+        checkAndRestartVideo();
+      }
+    }, 15000);
+  }
+
+  boatVideo.play().catch(() => {});
+  scheduleVideoReadyCheck();
+
+  let audioStarted = false;
+  function ensurePlay(e){
+    if (audioStarted) return;
+
+    if (!videoReady) {
+      console.log('User interaction - forcing video restart');
+      checkAndRestartVideo();
+    }
+    boatVideo.play().catch(() => {});
+    startAudio();
+    audioStarted = true;
+
+    removeEventListener('pointerdown', ensurePlay);
+    removeEventListener('keydown', ensurePlay);
+  }
+  addEventListener('pointerdown', ensurePlay);
+  addEventListener('keydown', ensurePlay);
+
+  soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { bgAudio.pause(); updateSoundUI(false); } });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
+    markVideoReadyIfPlayable();
+    boatVideo.play().catch(() => {});
+  });
+
+  addEventListener('pageshow', (event) => {
+    const navigationEntry = performance?.getEntriesByType?.('navigation')?.[0];
+    const isReload = navigationEntry ? navigationEntry.type === 'reload' : false;
+    if (isReload && !event.persisted) return;
+
+    markVideoReadyIfPlayable();
+    boatVideo.play().catch(() => {});
+    if (!bgAudio.paused) { bgAudio.play().catch(() => {}); }
+
+    if (!videoReady) {
+      scheduleVideoReadyCheck();
+    }
+  });
+
+  /* ===== Boats ===== */
+  const CROP = {x:0, y:0, w:1, h:1};
+  const BOAT_COUNT = window.innerWidth <= 640 ? 8 : 11, BOAT_HEIGHT=140;
+  const SPEED_X=0.10, BOB_AMPL=12, BOB_FREQ=0.0016;
+  const COLLISION_PAD = 15, PUSH_STRENGTH = 0.02, FRICTION = 0.34;
+  const PERSPECTIVE_MIN_SCALE = 0.70;
+  const PERSPECTIVE_MAX_SCALE = 1.35;
+  const OPACITY_MIN = 0.35;
+  const OPACITY_MAX = 0.95;
+
+  /* ===== Supabase config (READ) ===== */
+  const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
+
+  async function fetchApprovedResolutions(limit = 80) {
+    const headers = {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+      Accept: 'application/json',
+      Prefer: 'count=exact'
+    };
+
+    const baseFilter =
+      `?select=id,doubt,created_at,resolution` +
+      `&approved=is.null` +
+      `&support=is.null` +
+      `&resolution=is.true`;
+
+    // 1) Tiny count request (reads total from headers)
+    const countRes = await fetch(`${SUPABASE_URL}/rest/v1/doubts${baseFilter}&limit=1`, { headers });
+    if (!countRes.ok) throw new Error(`resolution count failed (${countRes.status})`);
+    const total = parseInt(countRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+    if (!total) return [];
+
+    // 2) Stratified sampling across the full timeline (old + new)
+    const bins = Math.min(12, Math.max(6, Math.ceil(limit / 10))); // 6–12 bins
+    const perBin = Math.max(1, Math.ceil(limit / bins));
+    const binSize = Math.max(1, Math.floor(total / bins));
+
+    const buildUrl = (o, l) =>
+      `${SUPABASE_URL}/rest/v1/doubts${baseFilter}` +
+      `&order=created_at.asc` +
+      `&limit=${l}&offset=${o}`;
+
+    const requests = [];
+    for (let i = 0; i < bins; i++) {
+      const base = i * binSize;
+      const jitterRoom = Math.max(1, binSize - perBin);
+      const jitter = Math.floor(Math.random() * jitterRoom);
+      const offset = Math.min(Math.max(0, base + jitter), Math.max(0, total - perBin));
+      requests.push(fetch(buildUrl(offset, perBin), { headers }).then(r => r.json()));
+    }
+
+    // 3) Merge, dedupe, shuffle, trim
+    const groups = await Promise.all(requests);
+    const rows = groups.flat().filter(r => r?.id && r?.doubt);
+
+    const seen = new Set();
+    const deduped = rows.filter(r => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+
+    for (let i = deduped.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
+    }
+
+    return deduped.slice(0, limit).map(r => ({
+      id: r.id,
+      text: String(r.doubt).trim(),
+      date: (r.created_at || new Date().toISOString()).slice(0, 10)
+    }));
+  }
+
+  /* ===== Turnstile + Worker intake (WRITE) ===== */
+  const TURNSTILE_SITE_KEY = '0x4AAAAAAB3yYAwiY5okqJtL';
+  const WORKER_URL = 'https://adrift-intake.hiwemaiq.workers.dev';
+  let captchaWidgetId = null;
+  let captchaToken = null;
+  let turnstileContainer = null;
+  let tsRenderAttempts = 0;
+  const TS_MAX_ATTEMPTS = 2;
+
+  function renderTurnstileInvisible(mountSelector) {
+    const mount = document.querySelector(mountSelector);
+    if (!mount) return;
+
+    turnstileContainer = mount;
+
+    if (!window.turnstile || typeof window.turnstile.render !== 'function') {
+      setTimeout(() => renderTurnstileInvisible(mountSelector), 100);
+      return;
+    }
+
+    try {
+      if (captchaWidgetId !== null && window.turnstile?.remove) {
+        try {
+          window.turnstile.remove(captchaWidgetId);
+        } catch (_) {}
+        captchaWidgetId = null;
+      }
+
+      captchaToken = null;
+
+      if (!document.body.contains(mount)) {
+        return;
+      }
+
+      captchaWidgetId = window.turnstile.render(mount, {
+        sitekey: TURNSTILE_SITE_KEY,
+        size: 'invisible',
+        callback: (t) => {
+          captchaToken = t;
+          tsRenderAttempts = 0;
+        },
+        'expired-callback': () => {
+          captchaToken = null;
+          if (window.turnstile &&
+              captchaWidgetId !== null &&
+              turnstileContainer &&
+              document.body.contains(turnstileContainer)) {
+            try { window.turnstile.reset(captchaWidgetId); } catch (_) {}
+          }
+        },
+        'error-callback': () => {
+          captchaToken = null;
+          if (tsRenderAttempts < TS_MAX_ATTEMPTS &&
+              turnstileContainer &&
+              document.body.contains(turnstileContainer)) {
+            tsRenderAttempts++;
+            setTimeout(() => renderTurnstileInvisible(mountSelector), 400);
+          }
+        }
+      });
+    } catch (e) {
+      console.warn('[TS] render error:', e);
+    }
+  }
+
+  async function getTurnstileToken() {
+    for (let i = 0; i < 60 && captchaWidgetId === null; i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    if (!window.turnstile || captchaWidgetId === null) {
+      console.warn('[TS] Widget not available');
+      return null;
+    }
+
+    if (captchaToken) {
+      return captchaToken;
+    }
+
+    try {
+      await window.turnstile.execute(captchaWidgetId);
+    } catch (e) {
+      console.warn('[TS] Execute failed:', e);
+      return null;
+    }
+
+    for (let i = 0; i < 30; i++) {
+      if (captchaToken) {
+        return captchaToken;
+      }
+
+      try {
+        const response = window.turnstile.getResponse?.(captchaWidgetId);
+        if (response) {
+          captchaToken = response;
+          return response;
+        }
+      } catch (_) {}
+
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    console.warn('[TS] Token timeout');
+    return null;
+  }
+
+  function resetTurnstile() {
+    if (window.turnstile &&
+        captchaWidgetId !== null &&
+        turnstileContainer &&
+        document.body.contains(turnstileContainer)) {
+      try { window.turnstile.reset(captchaWidgetId); } catch (_) {}
+    }
+    captchaToken = null;
+  }
+
+  async function postToWorker(text, token){
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, "cf-turnstile-response": token, type: 'resolution' })
+    });
+
+    if (res.status === 204) return true;
+
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+
+    if (!res.ok || data?.ok !== true) {
+      const msg = data?.error || `Worker request failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return true;
+  }
+
+  let APPROVED_RESOLUTIONS = [];
+  let USED_RESOLUTION_IDS = new Set();
+  let SHUFFLED_RESOLUTIONS = [];
+
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  function initializeResolutionPool() {
+    let shuffled = shuffleArray(APPROVED_RESOLUTIONS);
+    const randomStart = Math.floor(Math.random() * shuffled.length);
+    shuffled = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
+    SHUFFLED_RESOLUTIONS = shuffled;
+    USED_RESOLUTION_IDS.clear();
+  }
+
+  function pickRandomResolution() {
+    if (APPROVED_RESOLUTIONS.length === 0) {
+      return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
+    }
+
+    if (USED_RESOLUTION_IDS.size >= APPROVED_RESOLUTIONS.length) {
+      initializeResolutionPool();
+    }
+
+    let selectedResolution = null;
+    for (const resolution of SHUFFLED_RESOLUTIONS) {
+      if (!USED_RESOLUTION_IDS.has(resolution.id)) {
+        selectedResolution = resolution;
+        USED_RESOLUTION_IDS.add(selectedResolution.id);
+        break;
+      }
+    }
+
+    if (!selectedResolution) {
+      selectedResolution = SHUFFLED_RESOLUTIONS[0];
+      USED_RESOLUTION_IDS.add(selectedResolution.id);
+    }
+
+    return selectedResolution;
+  }
+
+  class Boat{
+    constructor(){
+      this.reset(true);
+    }
+    reset(initial = false) {
+      this.yBase = Math.random() * H * 0.75 + H * 0.1;
+      const approxW = this._w || (BOAT_HEIGHT * 1.8);
+      this.x = initial ? Math.random() * W : -(approxW * 0.5);
+      this.phase = Math.random() * Math.PI * 2;
+      this.alpha = 0.95;
+      const baseEntry = pickRandomResolution();
+      this.entry = { ...baseEntry };
+      this._h = BOAT_HEIGHT;
+      this._w = BOAT_HEIGHT * 1.8;
+      this.vx = 0;
+      this.vy = 0;
+      this.highlightUntil = 0;
+      this.paused = false;
+      this.morphingIn = false;
+      this.morphingOut = false;
+      this.morphT0 = 0;
+    }
+
+    update(t, boats){
+      const canMove = !(this.morphingOut);
+      if(canMove){ 
+        this.x += SPEED_X + this.vx; 
+        if(this.x > W + (this._w||160)) this.reset(false); 
+      }
+      const bob = Math.sin(this.phase + t*BOB_FREQ) * BOB_AMPL * 0.7; 
+      this.y = this.yBase + bob + this.vy;
+
+      const w = this._w || (BOAT_HEIGHT*1.8), h = this._h || BOAT_HEIGHT;
+      for(const other of boats){
+        if(other === this) continue;
+        const ow = other._w || (BOAT_HEIGHT*1.8), oh = other._h || BOAT_HEIGHT;
+        const halfW = w*0.5 + COLLISION_PAD, halfH = h*0.5 + COLLISION_PAD;
+        const otherHalfW = ow*0.5 + COLLISION_PAD, otherHalfH = oh*0.5 + COLLISION_PAD;
+        const dx = this.x - other.x, dy = this.y - other.y;
+        const overlapX = (halfW + otherHalfW) - Math.abs(dx);
+        const overlapY = (halfH + otherHalfH) - Math.abs(dy);
+        if(overlapX > 0 && overlapY > 0){
+          if(overlapX < overlapY){ 
+            const dirX = Math.sign(dx) || (Math.random()<0.5 ? 1 : -1); 
+            this.vx += dirX * overlapX * PUSH_STRENGTH; 
+          }
+          else { 
+            const dirY = Math.sign(dy) || (Math.random()<0.5 ? 1 : -1); 
+            this.vy += dirY * overlapY * PUSH_STRENGTH; 
+          }
+        }
+      }
+      this.vx *= FRICTION; 
+      this.vy *= FRICTION;
+    }
+
+    draw(now){
+      if(!videoReady) return;
+      const vW=boatVideo.videoWidth||640, vH=boatVideo.videoHeight||360;
+      const srcW=vW*CROP.w, srcH=vH*CROP.h, srcX=vW*CROP.x, srcY=vH*CROP.y;
+
+      const yNorm = Math.max(0, Math.min(1, (this.y || this.yBase) / H));
+      const scale = PERSPECTIVE_MIN_SCALE + (PERSPECTIVE_MAX_SCALE - PERSPECTIVE_MIN_SCALE) * yNorm;
+
+      let a;
+      if (yNorm >= 0.5) {
+        a = 1;
+      } else {
+        const t = yNorm / 0.5;
+        a = OPACITY_MIN + (1 - OPACITY_MIN) * t;
+      }
+      if(this.morphingOut) a = 0;
+      if(a <= 0) return;
+
+      const displayH = BOAT_HEIGHT * scale;
+      const displayW = displayH * (srcW/srcH);
+      this._w=displayW; this._h=displayH;
+
+      ctx.save();
+      ctx.translate(this.x, this.y);
+
+      if(this.highlightUntil){
+        const remaining = this.highlightUntil - performance.now();
+        if(remaining > 0){
+          const duration = 6000;
+          const tFrac = Math.max(0, remaining/duration);
+          const fade = 1 - (1 - tFrac) * (1 - tFrac);
+          ctx.save();
+          ctx.globalAlpha = fade;
+          const g = ctx.createRadialGradient(0,0,10, 0,0,220);
+          g.addColorStop(0,'rgba(255,240,160,.35)');
+          g.addColorStop(0.35,'rgba(255,210,100,.18)');
+          g.addColorStop(1,'rgba(255,210,100,0)');
+          ctx.globalCompositeOperation='screen';
+          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,220,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        } else {
+          this.highlightUntil = 0;
+        }
+      }
+
+      ctx.globalAlpha = a;
+
+      const supportsFilter = typeof ctx.filter !== 'undefined';
+      const prevFilter = supportsFilter ? ctx.filter : null;
+      if (supportsFilter) {
+        ctx.filter = 'none';
+      }
+
+      const ua = navigator.userAgent;
+
+const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+
+
+
+if (isWebKit) {
+
+  const dpr = window.devicePixelRatio || 1;
+
+  const offCanvas = document.createElement('canvas');
+
+  offCanvas.width  = displayW * dpr;
+
+  offCanvas.height = displayH * dpr;
+
+  const offCtx = offCanvas.getContext('2d');
+
+  offCtx.scale(dpr, dpr);
+
+  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+
+
+
+  ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
+
+  ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayHeight);
+
+  ctx.globalCompositeOperation = 'source-over';
+
+} else {
+
+  const prev = ctx.globalCompositeOperation;
+
+  ctx.globalCompositeOperation = 'screen';
+
+  ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW/2, -displayH/2, displayW, displayH);
+
+  ctx.globalCompositeOperation = prev;
+
+}
+
+      if (supportsFilter) {
+        ctx.filter = prevFilter;
+      }
+
+      ctx.restore();
+    }
+
+    hit(mx,my){ 
+      return mx>=this.x-this._w/2 && mx<=this.x+this._w/2 && 
+             my>=this.y-this._h/2 && mx!=null && my!=null && 
+             my>=this.y-this._h/2 && my<=this.y+this._h/2; 
+    }
+  }
+
+  let boats = [];
+
+  function escapeHtml(str = '') {
+    return String(str).replace(/[&<>"']/g, (char) => {
+      switch (char) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return char;
+      }
+    });
+  }
+
+  let overlay=null, noteEl=null, noteBoat=null, noteClosing=false, composerOpen=false;
+
+  const NO_DRAG_SELECTOR = 'textarea, input, select, button, a, [contenteditable="true"], .compose-field, .pill-btn, .note-close';
+
+  function makeDraggable(el, size){
+    let dragging=false, startX=0, startY=0, startLeft=0, startTop=0;
+    const clamp=(v,min,max)=>Math.max(min, Math.min(max, v));
+
+    el.addEventListener('pointerdown', (e)=>{
+      if(e.button && e.button !== 0) return;
+      if (e.target.closest(NO_DRAG_SELECTOR)) return;
+      dragging = true;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      startX = e.clientX; startY = e.clientY;
+      startLeft = parseFloat(el.style.left)||0;
+      startTop  = parseFloat(el.style.top)||0;
+      e.preventDefault();
+    });
+
+    el.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      let nextLeft = startLeft + dx, nextTop  = startTop  + dy;
+      const maxL = innerWidth  - size, maxT = innerHeight - size;
+      nextLeft = clamp(nextLeft, 0, Math.max(0, maxL));
+      nextTop  = clamp(nextTop , 0, Math.max(0, maxT));
+      el.style.left = nextLeft + 'px';
+      el.style.top  = nextTop  + 'px';
+    });
+
+    const endDrag=(e)=>{
+      if(!dragging) return;
+      dragging = false;
+      el.classList.remove('dragging');
+      try{ el.releasePointerCapture(e.pointerId); }catch(_){}
+    };
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+    el.addEventListener('lostpointercapture', ()=>{ dragging=false; el.classList.remove('dragging'); });
+  }
+
+  function createNote({ x = null, y = null, title, bodyHTML, metaHTML, boat = null, startScale = 0.72 }) {
+    overlay = document.createElement('div');
+    overlay.className = 'note-overlay';
+    overlay.innerHTML = `<div class="overlay-close" aria-hidden="true"></div>`;
+    document.body.appendChild(overlay);
+
+    noteEl = document.createElement('div');
+    noteEl.className = 'note';
+
+    const maxSize = Math.min(350, window.innerWidth * 0.9);
+    const size = maxSize;
+    const posX = (x ?? innerWidth / 2) - size / 2;
+    const posY = (y ?? innerHeight / 2) - size / 2;
+
+    noteEl.style.left = `${posX}px`;
+    noteEl.style.top = `${posY}px`;
+    noteEl.style.width = `${size}px`;
+    noteEl.style.height = `${size}px`;
+    noteEl.style.transformOrigin = 'center center';
+    noteEl.style.transform = `scale(${startScale}) translateZ(0)`;
+
+    const stage = document.createElement('div'); stage.className = 'note-stage';
+    const frame = document.createElement('div'); frame.className = 'note-frame';
+    noteEl.append(stage, frame);
+
+    function makeBox(circleClass){
+      const b = document.createElement('div'); b.className = 'note-box';
+      const i = document.createElement('div'); i.className = 'note-in ' + circleClass;
+      b.appendChild(i);
+      return b;
+    }
+    stage.append(makeBox('one'), makeBox('two'), makeBox('thr'), makeBox('fou'));
+
+    const content = document.createElement('div'); content.className='note-content';
+    content.innerHTML = `
+      <div class="note-title">${title}</div>
+      ${bodyHTML}
+      ${metaHTML||''}
+    `;
+    noteEl.appendChild(content);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'note-close';
+    closeBtn.setAttribute('aria-label','Close note');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+    closeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); closeNote(); });
+    closeBtn.addEventListener('transitionend', (e)=>{
+      if(e.propertyName === 'opacity' && getComputedStyle(closeBtn).opacity === '1'){
+        closeBtn.style.pointerEvents = 'auto';
+      }
+    });
+    noteEl.appendChild(closeBtn);
+
+    overlay.appendChild(noteEl);
+    noteBoat = boat || null;
+
+    makeDraggable(noteEl, size);
+
+    requestAnimationFrame(()=>{
+      noteEl.style.transform = 'scale(1) translateZ(0)';
+      setTimeout(()=> noteEl.classList.add('unfold'), 140);
+    });
+
+    overlay.querySelector('.overlay-close').addEventListener('click', closeNote, {once:true});
+  }
+
+  function closeNote(){
+    if(!noteEl || noteClosing) return;
+    noteClosing = true;
+
+    if(noteBoat){
+      noteBoat.morphingIn = false;
+    }
+
+    noteEl.classList.add('closing');
+
+    const FINISH = () => {
+      overlay?.remove(); 
+      overlay = null; 
+      noteEl = null;
+      noteBoat = null; 
+      noteClosing = false; 
+      composerOpen = false;
+    };
+
+    let done = false;
+    noteEl.addEventListener('transitionend', (e) => {
+      if(done || e.propertyName !== 'opacity') return;
+      done = true; 
+      FINISH();
+    }, {once:true});
+    
+    setTimeout(() => { 
+      if(!done) FINISH(); 
+    }, 280);
+  }
+
+  function openNoteFromBoat(boat){
+    boat.morphingIn = true;
+    boat.morphT0 = performance.now();
+    const entry = boat.entry || {};
+
+    const metaParts = [];
+    if (entry.date) {
+      const parsed = new Date(entry.date + 'T00:00:00');
+      if (!Number.isNaN(parsed.getTime())) {
+        metaParts.push(parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
+      }
+    }
+
+    const meta = metaParts.length ? `<div class="note-meta">${escapeHtml(metaParts.join(' • '))}</div>` : '';
+    const body = `<div class="note-text">${escapeHtml(entry.text || '').replace(/\n/g, '<br>')}</div>`;
+
+    const noteTitle = 'Anonymous Resolution';
+    const maxSize = Math.min(350, window.innerWidth * 0.9);
+
+    const isMobile = window.innerWidth <= 640;
+    const noteX = isMobile ? innerWidth / 2 : boat.x;
+    const noteY = isMobile ? innerHeight / 2 : boat.y;
+
+    createNote({ x:noteX, y:noteY, title:noteTitle, bodyHTML:body, metaHTML:meta, boat, startScale:(boat._h/maxSize)*0.9 });
+  }
+
+  function openComposerNote() {
+    composerOpen = true;
+
+    const noteTitle = 'Release a resolution';
+    const placeholderText = 'Type your resolution (200 characters max)';
+
+    const body = `
+      <textarea class="compose-field" id="releaseInput" maxlength="200" placeholder="${placeholderText}"></textarea>
+<div id="cf-turnstile-container"
+     style="position:absolute; left:0; bottom:0; width:1px; height:1px; opacity:0.01;"
+     aria-hidden="true"></div>
+      <div class="compose-foot">
+        <div><span id="charCount">0</span>/200</div>
+        <button class="pill-btn" id="submitResolution" type="button">Release</button>
+      </div>
+      <p class="compose-disclaimer">If you're struggling with self-harm, please reach out for help at findahelpline.com. Offensive content will be removed.</p>
+    `;
+
+    createNote({
+      x: innerWidth / 2,
+      y: innerHeight / 2,
+      title: noteTitle,
+      bodyHTML: body,
+      metaHTML: '',
+      boat: null,
+      startScale: 0.72
+    });
+
+    const input = document.getElementById('releaseInput');
+    const count = document.getElementById('charCount');
+    const submit = document.getElementById('submitResolution');
+
+    setTimeout(() => {
+      renderTurnstileInvisible('#cf-turnstile-container');
+    }, 50);
+
+    input.addEventListener('input', () => {
+      count.textContent = input.value.length;
+    });
+    setTimeout(() => input.focus(), 50);
+
+    async function doRelease() {
+      const text = (input.value || '').trim();
+      if (!text) {
+        input.focus();
+        return;
+      }
+
+      submit.disabled = true;
+      const prev = submit.textContent;
+      submit.textContent = 'Releasing…';
+
+      try {
+        const BYPASS_TS = false;
+
+        if (!BYPASS_TS) {
+          captchaToken = await getTurnstileToken();
+          if (!captchaToken) {
+            alert('Please complete the quick check, then try again.');
+            submit.disabled = false;
+            submit.textContent = prev;
+            return;
+          }
+        } else {
+          captchaToken = 'BYPASS_TEST_TOKEN';
+        }
+
+        await postToWorker(text, captchaToken);
+        resetTurnstile();
+
+        const b = new Boat();
+        b.entry = {
+          text,
+          date: new Date().toISOString().slice(0, 10),
+          id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+        };
+
+        b.x = innerWidth / 2;
+        b.yBase = innerHeight / 2;
+        b.phase = 0;
+        b.highlightUntil = performance.now() + 6000;
+        boats.push(b);
+
+        closeNote();
+
+      } catch (err) {
+        console.error('Release failed:', err);
+        alert(err.message || 'Failed to release your resolution.');
+      } finally {
+        submit.disabled = false;
+        submit.textContent = prev;
+      }
+    }
+
+    submit.addEventListener('click', doRelease);
+    input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        doRelease();
+      }
+    });
+  }
+
+  function animate(now=0){ 
+    ctx.clearRect(0,0,W,H); 
+
+    for(const b of boats){ 
+      b.update(now, boats); 
+    }
+
+    const byDepth = [...boats].sort((a,b)=> (a.y||a.yBase) - (b.y||b.yBase));
+    for(const b of byDepth){
+      b.draw(now);
+    }
+
+    requestAnimationFrame(animate); 
+  }
+  
+  animate();
+
+  canvas.addEventListener('pointermove', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let overBoat = false;
+    
+    for(const b of boats){ 
+      if(b.hit(mx,my) && !b.morphingOut){
+        overBoat = true;
+        break;
+      }
+    }
+    
+    canvas.style.cursor = overBoat ? 'pointer' : 'default';
+  });
+  
+  canvas.addEventListener('click', e=>{
+    if(composerOpen) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for(const b of boats){ 
+      if(b.hit(mx,my)){ 
+        if(b.morphingOut) return; 
+        openNoteFromBoat(b); 
+        break; 
+      } 
+    }
+  });
+
+  releaseBtn.addEventListener('click', openComposerNote);
+  addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeNote(); } });
+
+  (async function init(){
+    try {
+      APPROVED_RESOLUTIONS = await fetchApprovedResolutions(80);
+      if (APPROVED_RESOLUTIONS.length === 0) {
+        APPROVED_RESOLUTIONS = [{ id:'p1', text:'(waiting for first approved resolution…)', date:new Date().toISOString().slice(0,10) }];
+      }
+    } catch (err) {
+      console.error('Failed to load resolutions:', err);
+      APPROVED_RESOLUTIONS = [{ id:'p1', text:'(temporarily unable to load resolutions)', date:new Date().toISOString().slice(0,10) }];
+    }
+
+    initializeResolutionPool();
+    boats = Array.from({length: BOAT_COUNT}, () => new Boat());
+  })();
+</script>
+
+<script>
+(() => {
+  const header = document.querySelector('header.ripple');
+  if (!header) return;
+
+  const frames = [
+    { opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' },
+    { offset: 0.4, opacity: 0.35 },
+    { offset: 0.5, opacity: 1, transform: 'translate3d(0.5em,0,0) scale(1.1)', textShadow: '0 0 20px #fff' },
+    { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
+  ];
+
+  const letters = [...header.querySelectorAll(':scope > span:first-child > span')];
+  const badgeNumbers = [...header.querySelectorAll('.new-badge span')];
+  const allElements = [...letters, ...badgeNumbers];
+  const anims = allElements.map((el, i) => {
+    const a = el.animate(frames, {
+      duration: 4000,
+      fill: 'both',
+      delay: i * 60
+    });
+    a.pause();
+    return a;
+  });
+
+  header.addEventListener('mouseenter', () => {
+    anims.forEach(a => { a.playbackRate = 1; a.play(); });
+  });
+
+  header.addEventListener('mouseleave', () => {
+    anims.forEach(a => a.reverse());
+  });
+})();
+</script>
+<script src="./embers.js" defer></script>
+<script src="./menu.js" defer></script>
+</body>
+</html>
+  
