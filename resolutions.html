@@ -469,7 +469,7 @@
   <header class="ripple"><span><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></span><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>6</span></span></header>
 
   <!-- media -->
-  <video id="boatVideo" src="lantern.mp4" loop="" muted="" playsinline="" preload="auto"></video>
+  <video id="boatVideo" src="lantern.mp4" autoplay loop muted playsinline webkit-playsinline preload="auto"></video>
   <audio id="bgAudio" src="starlight.mp3" loop="" preload="auto"></audio>
 
   <!-- layers -->
@@ -592,14 +592,18 @@
   let videoReadyCheckTimeoutId = null;
 
   function markVideoReadyIfPlayable() {
-    if (boatVideo && boatVideo.readyState >= 2) {
-      videoReady = true;
-      if (videoReadyCheckTimeoutId) {
-        clearTimeout(videoReadyCheckTimeoutId);
-        videoReadyCheckTimeoutId = null;
-      }
+  if (!boatVideo) return;
+
+  // iOS Chrome sometimes never hits your canplay gate until interaction,
+  // but loadeddata/videoWidth becomes available earlier.
+  if (boatVideo.readyState >= 2 || boatVideo.videoWidth > 0) {
+    videoReady = true;
+    if (videoReadyCheckTimeoutId) {
+      clearTimeout(videoReadyCheckTimeoutId);
+      videoReadyCheckTimeoutId = null;
     }
   }
+}
 
   boatVideo.addEventListener('canplay', () => {
     markVideoReadyIfPlayable();
@@ -607,6 +611,20 @@
       boatVideo.play().catch(() => {});
     }
   });
+
+  // ✅ Mark ready as soon as the first frame exists (more reliable than canplay on iOS)
+boatVideo.addEventListener('loadeddata', markVideoReadyIfPlayable);
+boatVideo.addEventListener('playing', markVideoReadyIfPlayable);
+
+// ✅ iOS (Chrome is WebKit too): give it a short kick after layout
+if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+  setTimeout(() => {
+    try { boatVideo.load(); } catch (_) {}
+    markVideoReadyIfPlayable();
+    boatVideo.play().catch(() => {});
+  }, 600);
+}
+
 
   function checkAndRestartVideo() {
     if (!videoReady && videoRestartAttempts < MAX_RESTART_ATTEMPTS) {
