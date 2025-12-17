@@ -979,6 +979,7 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
       this.morphingIn = false;
       this.morphingOut = false;
       this.morphT0 = 0;
+      this.spawnedAt = performance.now();
     }
 
     update(t, boats){
@@ -1016,6 +1017,8 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
 
     draw(now){
       if(!videoReady) return;
+      const fadeIn = Math.min(1, (performance.now() - (this.spawnedAt || 0)) / 250);
+
       const vW=boatVideo.videoWidth||640, vH=boatVideo.videoHeight||360;
       const srcW=vW*CROP.w, srcH=vH*CROP.h, srcX=vW*CROP.x, srcY=vH*CROP.y;
 
@@ -1059,7 +1062,7 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
         }
       }
 
-      ctx.globalAlpha = a;
+ctx.globalAlpha = a * fadeIn;
 
       const supportsFilter = typeof ctx.filter !== 'undefined';
       const prevFilter = supportsFilter ? ctx.filter : null;
