@@ -567,7 +567,12 @@
   const releaseBtn = document.getElementById('releaseBtn');
   const hintEl = document.querySelector('.hint');
 
+  const IOS_OFFSCREEN = document.createElement('canvas');
+const IOS_OFFCTX = IOS_OFFSCREEN.getContext('2d');
+
   function prepareInlineVideo() {
+  if (!boatVideo) return;
+  boatVideo.defaultMuted = true;
   boatVideo.muted = true;
   boatVideo.playsInline = true;
   boatVideo.setAttribute('muted', '');
@@ -1080,36 +1085,22 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
         ctx.filter = 'none';
       }
 
-      const ua = navigator.userAgent;
-
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
 
 
-if (isWebKit) {
-
+if (isIOS) {
   const dpr = window.devicePixelRatio || 1;
 
-  const offCanvas = document.createElement('canvas');
+  IOS_OFFSCREEN.width  = Math.max(1, Math.floor(displayW * dpr));
+  IOS_OFFSCREEN.height = Math.max(1, Math.floor(displayH * dpr));
 
-  offCanvas.width  = displayW * dpr;
+  IOS_OFFCTX.setTransform(dpr, 0, 0, dpr, 0, 0);
+  IOS_OFFCTX.clearRect(0, 0, displayW, displayH);
+  IOS_OFFCTX.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
 
-  offCanvas.height = displayH * dpr;
-
-  const offCtx = offCanvas.getContext('2d');
-
-  offCtx.scale(dpr, dpr);
-
-  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-
-
-
-  ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
-
- ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
-
-
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(IOS_OFFSCREEN, -displayW/2, -displayH/2, displayW, displayH);
   ctx.globalCompositeOperation = 'source-over';
-
 } else {
 
   const prev = ctx.globalCompositeOperation;
