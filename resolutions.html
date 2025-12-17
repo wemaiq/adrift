@@ -1047,9 +1047,12 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
           const fade = 1 - (1 - tFrac) * (1 - tFrac);
           ctx.save();
           ctx.globalAlpha = fade;
-         const g = ctx.createRadialGradient(0,0,10, 0,0,110); g.addColorStop(0,'rgba(255,240,160,.35)'); g.addColorStop(0.35,'rgba(255,210,100,.18)'); g.addColorStop(1,'rgba(255,210,100,0)');
+         const g = ctx.createRadialGradient(0,0,10, 0,0,50); 
+          g.addColorStop(0,'rgba(255,240,160,.35)'); 
+          g.addColorStop(0.35,'rgba(255,210,100,.18)'); 
+          g.addColorStop(1,'rgba(255,210,100,0)');
           ctx.globalCompositeOperation='screen';
-          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,110,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,50,0,Math.PI*2); ctx.fill();
           ctx.restore();
         } else {
           this.highlightUntil = 0;
