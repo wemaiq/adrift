@@ -1954,6 +1954,10 @@ async function postToWorker(text, token){
   updateToggleState();
   applyViewState();
 
+  const DEFAULT_VOL = 0.28;
+const AUDIO_START_DELAY_MS = 2000;
+let audioStartTimer = null;
+
 function startAudio(delayMs = AUDIO_START_DELAY_MS){
   if (audioStartTimer || !bgAudio.paused) return;
 
