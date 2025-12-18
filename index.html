@@ -1959,14 +1959,23 @@ const DEFAULT_VOL = 0.28;
 const AUDIO_START_DELAY_MS = 2000;
 let audioStartTimer = null;
 
-function startAudio(){
+function startAudio(delayMs = AUDIO_START_DELAY_MS){
   if (audioStartTimer || !bgAudio.paused) return;
+
+  // ✅ If user explicitly asked for instant audio, flip UI immediately
+  if (delayMs === 0) updateSoundUI(true);
 
   audioStartTimer = setTimeout(() => {
     audioStartTimer = null;
     bgAudio.volume = DEFAULT_VOL;
-    bgAudio.play().then(() => updateSoundUI(true)).catch(() => {});
-  }, AUDIO_START_DELAY_MS);
+
+    bgAudio.play()
+      .then(() => updateSoundUI(true))
+      .catch(() => {
+        // If play fails, roll UI back
+        updateSoundUI(false);
+      });
+  }, delayMs);
 }
 
 function cancelScheduledAudioStart(){
@@ -2146,7 +2155,20 @@ addEventListener('pointerdown', ensurePlay);
 addEventListener('keydown', ensurePlay);
 /* ==== end change ==== */
 
-soundToggle.addEventListener('click', ()=>{ if(bgAudio.paused){ startAudio(); } else { cancelScheduledAudioStart(); bgAudio.pause(); updateSoundUI(false); } });
+soundToggle.addEventListener('click', () => {
+  if (bgAudio.paused) {
+    cancelScheduledAudioStart();
+    startAudio(0); // instant on
+    audioStarted = true; // ✅ treat as started so ensurePlay won't re-trigger
+  } else {
+    cancelScheduledAudioStart();
+    bgAudio.pause();
+    updateSoundUI(false);
+    audioStarted = false; // ✅ allow boat click to start again later
+  }
+});
+
+  
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (videoReadyCheckTimeoutId) {
