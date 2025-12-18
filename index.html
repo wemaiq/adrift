@@ -1954,29 +1954,29 @@ async function postToWorker(text, token){
   updateToggleState();
   applyViewState();
 
-  /* ====== Media autoplay ====== */
-const DEFAULT_VOL = 0.28;
-const AUDIO_START_DELAY_MS = 2000;
-let audioStartTimer = null;
-
 function startAudio(delayMs = AUDIO_START_DELAY_MS){
   if (audioStartTimer || !bgAudio.paused) return;
 
-  // ✅ If user explicitly asked for instant audio, flip UI immediately
-  if (delayMs === 0) updateSoundUI(true);
+  // Start immediately (gesture-safe), but silent
+  bgAudio.volume = 0;
 
-  audioStartTimer = setTimeout(() => {
-    audioStartTimer = null;
-    bgAudio.volume = DEFAULT_VOL;
-
-    bgAudio.play()
-      .then(() => updateSoundUI(true))
-      .catch(() => {
-        // If play fails, roll UI back
-        updateSoundUI(false);
-      });
-  }, delayMs);
+  bgAudio.play()
+    .then(() => {
+      // Keep your “2s later” feel by raising volume after the delay
+      audioStartTimer = setTimeout(() => {
+        audioStartTimer = null;
+        bgAudio.volume = DEFAULT_VOL;
+        updateSoundUI(true);
+      }, delayMs);
+    })
+    .catch(() => {
+      // If play fails, roll UI back
+      bgAudio.volume = 0;
+      updateSoundUI(false);
+      audioStartTimer = null;
+    });
 }
+
 
 function cancelScheduledAudioStart(){
   if (!audioStartTimer) return;
