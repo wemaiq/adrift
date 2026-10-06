@@ -1516,7 +1516,9 @@ header.ripple span.figtree-adrift {
   if (shouldSkipIntro) {
     try { sessionStorage.removeItem('skipIntro'); } catch (_) {}
     revealMainContent(true);
-    runEnterFlow();
+    // Wait for this script's configuration and boat state to initialize before
+    // preloading; return navigation reaches this block before those declarations.
+    queueMicrotask(runEnterFlow);
   }
 
   /* =====================
