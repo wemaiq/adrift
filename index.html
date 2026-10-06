@@ -281,7 +281,7 @@
     letter-spacing: 0.05em;
     font-weight: 400;
     color: #9aa0a8;
-    opacity: 0.8;
+    opacity: 1;
     padding: 8px 10px;
     border-radius: 10px;
     background: rgba(255,255,255,.02);
@@ -289,19 +289,31 @@
     z-index: 5;
     white-space: nowrap;
   }
-
   .site-footer a {
-    color: #b7bdc5;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    transition: color .25s ease, border-color .25s ease;
+    color: #e4e7eb;
+    font-weight: 500;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: currentColor;
+    border-bottom: 0;
+    border-radius: 2px;
+    transition: color .2s ease, text-shadow .2s ease;
   }
 
   .site-footer a:hover,
   .site-footer a:focus-visible {
-    color: #ececed;
-    border-bottom-color: rgba(255,255,255,.4);
-    outline: none;
+    color: #ffe0a3;
+    text-shadow: 0 0 12px rgba(255, 224, 163, .4);
+  }
+
+  .site-footer a:focus-visible {
+    outline: 2px solid #ffe0a3;
+    outline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-footer a { transition: none; }
   }
 
   /* View toggle */
@@ -1077,8 +1089,7 @@ header.ripple span.figtree-adrift {
 
   let SUPPORT_NOTES = [];
   let ACTIVE_SUPPORT_NOTES = [];
-  let SHUFFLED_SUPPORT_NOTES = [];
-  let USED_SUPPORT_IDS = new Set();
+  const supportPool = createNotePool();
   let supportFetchPromise = null;
 
   function normalizeSupportItem(raw = {}, fallbackRow = {}, index = 0) {
@@ -1165,46 +1176,16 @@ header.ripple span.figtree-adrift {
   }
 
   function initializeSupportPool() {
-    if (!ACTIVE_SUPPORT_NOTES.length) {
-      SHUFFLED_SUPPORT_NOTES = [];
-      USED_SUPPORT_IDS.clear();
-      return;
-    }
-
-    let shuffled = shuffleArray(ACTIVE_SUPPORT_NOTES);
-    const randomStart = Math.floor(Math.random() * shuffled.length);
-    SHUFFLED_SUPPORT_NOTES = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
-    USED_SUPPORT_IDS.clear();
+    supportPool.update(ACTIVE_SUPPORT_NOTES);
   }
 
   function pickRandomCareNote() {
-    if (!ACTIVE_SUPPORT_NOTES.length) {
-      return {
-        id: 'care-placeholder',
-        text: 'Care notes are on their way.',
-        date: new Date().toISOString().slice(0, 10),
-        attribution: ''
-      };
-    }
-
-    if (!SHUFFLED_SUPPORT_NOTES.length || USED_SUPPORT_IDS.size >= SHUFFLED_SUPPORT_NOTES.length) {
-      initializeSupportPool();
-    }
-
-    let selected = null;
-    for (const item of SHUFFLED_SUPPORT_NOTES) {
-      if (!USED_SUPPORT_IDS.has(item.id)) {
-        selected = item;
-        break;
-      }
-    }
-
-    if (!selected) {
-      selected = SHUFFLED_SUPPORT_NOTES[0];
-    }
-
-    USED_SUPPORT_IDS.add(selected.id);
-    return { ...selected };
+    return supportPool.pick() || {
+      id: 'care-placeholder',
+      text: 'Care notes are on their way.',
+      date: new Date().toISOString().slice(0, 10),
+      attribution: ''
+    };
   }
 
   let currentView = 'doubts';
@@ -1527,58 +1508,55 @@ header.ripple span.figtree-adrift {
   const SUPABASE_URL  = 'https://lrjpntpvcgzjhowrlmit.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyanBudHB2Y2d6amhvd3JsbWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTk4ODcsImV4cCI6MjA3MjA3NTg4N30.sDdezusu8bp6lBp6hmU6QnJVIz0Et4VHp5giEpUTa40';
 
-// NEW: pulls ~80 rows total, evenly across the full timeline (old + new) without DB changes
-async function fetchApprovedDoubts(limit = 80) {
+// Sample across the entire collection, including the oldest and newest rows.
+async function fetchNoteSample(filters, limit) {
   const headers = {
     apikey: SUPABASE_ANON,
     Authorization: `Bearer ${SUPABASE_ANON}`,
     Accept: 'application/json',
     Prefer: 'count=exact'
   };
-
-  // 1) Tiny count request (reads total from headers)
-  const countRes = await fetch(`${SUPABASE_URL}/rest/v1/doubts?select=id&approved=is.true&limit=1`, { headers });
-  if (!countRes.ok) throw new Error(`count failed (${countRes.status})`);
-  const total = parseInt(countRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  const baseUrl = `${SUPABASE_URL}/rest/v1/doubts?${filters}`;
+  const countRes = await fetch(`${baseUrl}&select=id&limit=1`, { headers });
+  if (!countRes.ok) throw new Error(`Note count failed (${countRes.status})`);
+  const total = Number(countRes.headers.get('Content-Range')?.split('/')[1]);
+  if (!Number.isSafeInteger(total) || total < 0) throw new Error('Missing note count');
   if (!total) return [];
 
-  // 2) Stratified sampling: slice the whole range into bins, fetch a few from each bin
-  const bins = Math.min(12, Math.max(6, Math.ceil(limit / 10))); // 6–12 bins
-  const perBin = Math.max(1, Math.ceil(limit / bins));
-  const binSize = Math.max(1, Math.floor(total / bins));
+  const fetchRange = async (offset, count) => {
+    const res = await fetch(`${baseUrl}&select=id,doubt,created_at,support,approved&order=created_at.asc,id.asc&offset=${offset}&limit=${count}`, { headers });
+    if (!res.ok) throw new Error(`Note fetch failed (${res.status})`);
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error('Invalid note response');
+    return rows;
+  };
 
-  const buildUrl = (o, l) =>
-    `${SUPABASE_URL}/rest/v1/doubts` +
-    `?select=id,doubt,created_at` +
-    `&approved=is.true` +
-    `&order=created_at.asc` +
-    `&limit=${l}&offset=${o}`;
-
+  const target = Math.min(total, limit);
+  if (total <= limit) return fetchRange(0, total);
+  const bins = Math.min(12, target);
   const requests = [];
   for (let i = 0; i < bins; i++) {
-    const base = i * binSize;
-    const jitterRoom = Math.max(1, binSize - perBin);
-    const jitter = Math.floor(Math.random() * jitterRoom);
-    const offset = Math.min(Math.max(0, base + jitter), Math.max(0, total - perBin));
-    requests.push(fetch(buildUrl(offset, perBin), { headers }).then(r => r.json()));
+    const start = Math.floor(i * total / bins);
+    const end = Math.floor((i + 1) * total / bins);
+    const size = end - start;
+    const count = Math.floor((i + 1) * target / bins) - Math.floor(i * target / bins);
+    // Wrap within each bin so edge rows have the same chance as interior rows.
+    const offset = Math.floor(Math.random() * size);
+    const firstCount = Math.min(count, size - offset);
+    requests.push(fetchRange(start + offset, firstCount));
+    if (firstCount < count) requests.push(fetchRange(start, count - firstCount));
   }
+  const rows = (await Promise.all(requests)).flat();
+  const unique = new Map(rows.filter(row => row?.id && String(row.doubt ?? '').trim()).map(row => [String(row.id), row]));
+  return shuffleArray([...unique.values()]).slice(0, limit);
+}
 
-  // 3) Merge, dedupe, shuffle, trim
-  const groups = await Promise.all(requests);
-  const rows = groups.flat().filter(r => r?.id && r?.doubt);
-
-  const seen = new Set();
-  const deduped = rows.filter(r => (seen.has(r.id) ? false : (seen.add(r.id), true)));
-
-  for (let i = deduped.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
-  }
-
-  return deduped.slice(0, limit).map(r => ({
-    id: r.id,
-    text: String(r.doubt).trim(),
-    date: (r.created_at || new Date().toISOString()).slice(0, 10)
+async function fetchApprovedDoubts(limit = 80) {
+  const rows = await fetchNoteSample('approved=is.true', limit);
+  return rows.filter(row => row?.id && String(row.doubt ?? '').trim()).map(row => ({
+    id: String(row.id),
+    text: String(row.doubt).trim(),
+    date: (row.created_at || new Date().toISOString()).slice(0, 10)
   }));
 }
 
@@ -1609,22 +1587,7 @@ async function fetchTotalDoubts() {
 }
 
 async function fetchSupportNotes(limit = 400) {
-  const headers = {
-    apikey: SUPABASE_ANON,
-    Authorization: `Bearer ${SUPABASE_ANON}`,
-    Accept: 'application/json'
-  };
-
-  const url = `${SUPABASE_URL}/rest/v1/doubts?select=id,doubt,created_at,support,approved&support=is.true&approved=is.false&order=created_at.desc&limit=${limit}`;
-
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Support fetch failed (${res.status}) ${text}`);
-  }
-
-  const data = await res.json();
-  const rows = Array.isArray(data) ? data : [data];
+  const rows = await fetchNoteSample('support=is.true&approved=is.false', limit);
 
   return rows
     .map((row, idx) => {
@@ -2227,8 +2190,7 @@ addEventListener('pageshow', (event) => {
 
   // Holds fetched approved doubts and session tracking
   let APPROVED_DOUBTS = [];
-  let USED_DOUBT_IDS = new Set(); // Track used doubts this session
-  let SHUFFLED_DOUBTS = []; // Pre-shuffled pool for current session
+  const doubtPool = createNotePool();
 
   function shuffleArray(array) {
     const shuffled = [...array];
@@ -2239,68 +2201,63 @@ addEventListener('pageshow', (event) => {
     return shuffled;
   }
 
+  // Preserve used IDs when data changes; remove stale entries immediately.
+  function createNotePool() {
+    let items = [];
+    let pending = [];
+    let used = new Set();
+    let lastId = null;
+    function refill() {
+      pending = shuffleArray(items.filter(item => !used.has(item.id)));
+      if (!pending.length) {
+        used.clear();
+        pending = shuffleArray(items);
+      }
+      if (pending.length > 1 && pending[0].id === lastId) {
+        const index = 1 + Math.floor(Math.random() * (pending.length - 1));
+        [pending[0], pending[index]] = [pending[index], pending[0]];
+      }
+    }
+    return {
+      update(nextItems) {
+        items = [...new Map(nextItems.filter(item => item?.id).map(item => [String(item.id), { ...item, id: String(item.id) }])).values()];
+        const ids = new Set(items.map(item => item.id));
+        used = new Set([...used].filter(id => ids.has(id)));
+        refill();
+      },
+      pick() {
+        if (!items.length) return null;
+        if (!pending.length) refill();
+        const item = pending.shift();
+        used.add(item.id);
+        lastId = item.id;
+        return { ...item };
+      }
+    };
+  }
+
   function initializeDoubtPool() {
-    // Double shuffle for more randomness
-    let shuffled = shuffleArray(APPROVED_DOUBTS);
-
-    // Start from a random position in the shuffled array
-    const randomStart = Math.floor(Math.random() * shuffled.length);
-    shuffled = [...shuffled.slice(randomStart), ...shuffled.slice(0, randomStart)];
-
-    SHUFFLED_DOUBTS = shuffled;
-    USED_DOUBT_IDS.clear();
-    console.log('Initialized shuffled doubt pool:', SHUFFLED_DOUBTS.length, 'doubts');
+    doubtPool.update(APPROVED_DOUBTS);
   }
 
   function pickRandomDoubt() {
-    if (APPROVED_DOUBTS.length === 0) {
-      // Safe placeholder if fetch returns nothing (or before it completes)
-      return { text: "…", date: new Date().toISOString().slice(0,10), id: "placeholder" };
-    }
-
-    // If we've used all doubts, reinitialize the pool
-    if (USED_DOUBT_IDS.size >= APPROVED_DOUBTS.length) {
-      console.log('All doubts used, reshuffling pool');
-      initializeDoubtPool();
-    }
-
-    // Find the next unused doubt from our shuffled pool
-    let selectedDoubt = null;
-    for (const doubt of SHUFFLED_DOUBTS) {
-      if (!USED_DOUBT_IDS.has(doubt.id)) {
-        selectedDoubt = doubt;
-        USED_DOUBT_IDS.add(selectedDoubt.id);
-        break;
-      }
-    }
-
-    // Fallback (shouldn't happen with the logic above)
-    if (!selectedDoubt) {
-      selectedDoubt = SHUFFLED_DOUBTS[0];
-      USED_DOUBT_IDS.add(selectedDoubt.id);
-    }
-
-    return selectedDoubt;
+    return doubtPool.pick() || { text: '…', date: new Date().toISOString().slice(0, 10), id: 'placeholder' };
   }
 
   async function refreshDoubtPool() {
     try {
-      const freshDoubts = await fetchApprovedDoubts(80);
-      if (freshDoubts.length > 0) {
-        const oldLength = APPROVED_DOUBTS.length;
-        APPROVED_DOUBTS = freshDoubts;
-
-        // Only reinitialize if we got significantly more doubts
-        if (freshDoubts.length > oldLength * 1.2) {
-          initializeDoubtPool();
-          console.log('Refreshed and reshuffled doubt pool:', APPROVED_DOUBTS.length, 'doubts');
-        } else {
-          console.log('Refreshed doubt pool:', APPROVED_DOUBTS.length, 'doubts');
-        }
-      }
+      APPROVED_DOUBTS = await fetchApprovedDoubts(80);
+      initializeDoubtPool();
     } catch (err) {
       console.error('Failed to refresh doubts:', err);
-      // Keep using existing doubts if refresh fails
+    }
+  }
+
+  async function refreshSupportPool() {
+    try {
+      setSupportNotes(await fetchSupportNotes(400));
+    } catch (err) {
+      console.error('Failed to refresh care notes:', err);
     }
   }
 
@@ -2483,7 +2440,10 @@ ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
   let boats = [];
 
   // Also add a periodic refresh every 5 minutes
-  setInterval(refreshDoubtPool, 5 * 60 * 1000);
+  setInterval(() => {
+    refreshDoubtPool();
+    refreshSupportPool();
+  }, 5 * 60 * 1000);
 
   /* ===== Unfolding NOTE factory (boat + composer) ===== */
   let overlay=null, noteEl=null, noteBoat=null, noteClosing=false, composerOpen=false;
