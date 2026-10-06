@@ -1569,21 +1569,17 @@ async function fetchTotalDoubts() {
     Prefer: 'count=exact'
   };
 
-  const [doubtsResult, supportResult, resolutionsResult] = await Promise.allSettled([
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&approved=is.true`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.true`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/doubts?select=count&support=is.null&approved=is.null&resolution=is.true`, { headers })
-  ]);
+  // Count every record once, regardless of moderation status or note type.
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/doubts?select=id&limit=1`, {
+    method: 'HEAD',
+    headers,
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`Total count failed (${response.status})`);
 
-  const parseCount = (result) => {
-    if (result.status !== 'fulfilled') return 0;
-    const response = result.value;
-    if (!response.ok) return 0;
-    const total = parseInt(response.headers.get('Content-Range')?.split('/')[1] || '0', 10);
-    return Number.isFinite(total) ? total : 0;
-  };
-
-  return parseCount(doubtsResult) + parseCount(supportResult) + parseCount(resolutionsResult);
+  const total = response.headers.get('Content-Range')?.split('/')[1];
+  if (!total || !/^\d+$/.test(total)) throw new Error('Total count unavailable');
+  return Number(total);
 }
 
 async function fetchSupportNotes(limit = 400) {
@@ -2712,6 +2708,11 @@ if (!BYPASS_TS) {
 
 // Send token with your text
 await postToWorker(text, captchaToken);
+
+// Refresh the table total after the submission has been saved.
+fetchTotalDoubts().then(total => {
+  if (doubtCounter) animateDoubtCounter(doubtCounter, total);
+}).catch(err => console.error('Failed to refresh total count:', err));
 
 resetTurnstile();
 
