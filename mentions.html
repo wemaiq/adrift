@@ -33,7 +33,7 @@
     main {
       width: min(760px, 100%);
       margin: 0 auto;
-      padding: 18px 22px 80px;
+      padding: 114px 22px 80px;
     }
 
     .mentions-header {
@@ -41,13 +41,25 @@
       margin: 0 auto 20px;
     }
 
-    h1 {
-      margin: 0;
-      color: #fff;
-      font: 400 20px/1.6 "Dongle", ui-sans-serif, system-ui, sans-serif;
+    header.ripple {
+      font-weight: 400;
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
       letter-spacing: 0.25em;
+      font-size: 20px;
+      font-family: "Dongle", ui-sans-serif, system-ui, sans-serif;
       text-transform: uppercase;
       text-align: center;
+      user-select: none;
+      z-index: 5;
+    }
+
+    .ripple > * {
+      display: inline-block;
+      text-shadow: 0 0 0 #fff;
+      color: transparent;
     }
 
     .mentions-heading-row {
@@ -55,10 +67,9 @@
       align-items: baseline;
       justify-content: space-between;
       gap: 16px;
-      margin-top: 44px;
     }
 
-    .mentions-heading-row p {
+    .mentions-heading-row h1 {
       margin: 0;
       font-size: 18px;
       font-weight: 600;
@@ -119,8 +130,8 @@
     }
 
     @media (max-width: 640px) {
-      main { padding: 10px 18px 40px; }
-      .mentions-heading-row { margin-top: 32px; }
+      header.ripple { top: 10px; }
+      main { padding: 88px 18px 40px; }
       .mentions-list li { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
@@ -146,14 +157,15 @@
     </div>
   </div>
 
+  <header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
+
   <main>
-    <header class="mentions-header">
-      <h1>Mentions</h1>
+    <div class="mentions-header">
       <div class="mentions-heading-row">
-        <p>Places where Adrift was featured</p>
+        <h1>Places where Adrift was featured</h1>
         <time class="mentions-updated" datetime="2026-11">Updated Nov 2026</time>
       </div>
-    </header>
+    </div>
 
     <ul class="mentions-list" role="list">
       <li>
@@ -328,6 +340,38 @@
     });
   })();
   </script>
+<script>
+(() => {
+  const header = document.querySelector('header.ripple');
+  if (!header) return;
+
+  const frames = [
+    { opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' },
+    { offset: 0.4, opacity: 0.35 },
+    { offset: 0.5, opacity: 1, transform: 'translate3d(0.5em,0,0) scale(1.1)', textShadow: '0 0 20px #fff' },
+    { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
+  ];
+
+const letters = [...header.querySelectorAll(':scope > span > span')];
+  const anims = letters.map((el, i) => {
+    const a = el.animate(frames, {
+      duration: 4000,
+      fill: 'both',
+      delay: i * 60 // optional stagger
+    });
+    a.pause();
+    return a;
+  });
+
+  header.addEventListener('mouseenter', () => {
+    anims.forEach(a => { a.playbackRate = 1; a.play(); });
+  });
+
+  header.addEventListener('mouseleave', () => {
+    anims.forEach(a => a.reverse());
+  });
+})();
+</script>
   <script src="./menu.js" defer></script>
 </body>
 </html>
