@@ -23,7 +23,12 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      opacity: 0;
+      transition: opacity 120ms ease-out;
     }
+
+    body.is-page-visible { opacity: 1; }
+    body.is-page-fading { opacity: 0; }
 
     main {
       width: min(760px, 100%);
@@ -109,6 +114,7 @@
       .mentions-list li { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
+  <noscript><style>body { opacity: 1; }</style></noscript>
 </head>
 <body>
   <button class="menu-toggle" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open navigation">
@@ -213,6 +219,103 @@
       </li>
     </ul>
   </main>
+  <script>
+  (() => {
+    const body = document.body;
+
+    requestAnimationFrame(() => body.classList.add('is-page-visible'));
+
+    const eligibleLink = (link) => {
+      const target = link.getAttribute('target');
+      if (target && target !== '_self') return false;
+
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return false;
+
+      const url = new URL(href, window.location.href);
+      return url.origin === window.location.origin;
+    };
+
+    const navigateWithFade = (href) => {
+      body.classList.remove('is-page-visible');
+      body.classList.add('is-page-fading');
+
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        window.location.href = href;
+      };
+
+      const fallback = setTimeout(go, 500);
+
+      const onEnd = (e) => {
+        if (e.target !== body) return;
+        clearTimeout(fallback);
+        body.removeEventListener('transitionend', onEnd);
+        go();
+      };
+
+      body.addEventListener('transitionend', onEnd);
+    };
+
+    const prefetched = new Set();
+    const prefetch = (href) => {
+      if (prefetched.has(href)) return;
+      prefetched.add(href);
+
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const attachPrefetch = (link) => {
+      const maybePrefetch = () => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin === window.location.origin) prefetch(link.href);
+      };
+
+      link.addEventListener('mouseenter', maybePrefetch, { passive: true });
+      link.addEventListener('touchstart', maybePrefetch, { passive: true });
+    };
+
+    const onClick = (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      ) return;
+
+      const link = event.currentTarget;
+      if (!eligibleLink(link)) return;
+
+      const href = link.href;
+      if (href === window.location.href) return;
+
+      if (document.startViewTransition) {
+        event.preventDefault();
+        document.startViewTransition(() => { window.location.href = href; });
+        return;
+      }
+
+      event.preventDefault();
+      navigateWithFade(href);
+    };
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.addEventListener('click', onClick, { passive: false });
+      attachPrefetch(link);
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        body.classList.add('is-page-visible');
+        body.classList.remove('is-page-fading');
+      }
+    });
+  })();
+  </script>
   <script src="./menu.js" defer></script>
 </body>
 </html>
