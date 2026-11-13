@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>About — Adrift</title>
+  <title>About Adrift — A Space for Doubt and Care</title>
+  <meta name="description" content="Adrift began as a place to share anonymous doubts. Read how it became a shared space for encouragement, care, and hope.">
+  <link rel="canonical" href="https://adrift.site/about.html">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&family=Dongle&display=swap" rel="stylesheet">
@@ -218,6 +220,8 @@
     }
 
 
+    .ripple h1 { font: inherit; margin: 0; }
+
     .ripple > * {
       display: inline-block;
       text-shadow: 0 0 0 #fff;
@@ -276,7 +280,7 @@
   <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
     <div class="menu-overlay__content">
       <div class="menu-overlay__links" role="navigation" aria-label="Primary navigation">
-        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="/#app">Home</a>
         <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">2027</span></a>
         <a class="menu-link" href="about.html">About</a>
         <a class="menu-link" href="mentions.html">Mentions</a>
@@ -284,7 +288,7 @@
       <div class="menu-overlay__hint">Tap anywhere to close</div>
     </div>
   </div>
-<header class="ripple"><span><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></span></header>
+<header class="ripple"><h1 aria-label="About Adrift"><span>a</span><span>d</span><span>r</span><span>i</span><span>f</span><span>t</span></h1></header>
     <div class="page">
       <div class="content">
         <p class="blurb">Adrift began as a space to release doubt without needing answers or explanations. A place to be honest, be human, and feel a little less alone.</p>
@@ -425,7 +429,7 @@
     { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
   ];
 
-const letters = [...header.querySelectorAll(':scope > span > span')];
+const letters = [...header.querySelectorAll(':scope > h1 > span')];
   const anims = letters.map((el, i) => {
     const a = el.animate(frames, {
       duration: 4000,

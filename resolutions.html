@@ -21,7 +21,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <!-- SEO + AEO Metadata -->
-<title>Resolutions — Adrift</title>
+<title>Share New Year’s Resolutions Anonymously — Adrift</title>
+<link rel="canonical" href="https://adrift.site/resolutions.html">
 <meta name="description" content="Adrift Resolutions is a quiet digital space where people can anonymously share their resolutions and dreams as paper boats.">
 <meta name="keywords" content="resolutions, goals, aspirations, paper boats, quiet space, dreams">
 
@@ -329,6 +330,8 @@
     font-style: normal;
   }
 
+  .ripple h1 { font: inherit; margin: 0; }
+
   .ripple > * {
     display: inline-block;
     text-shadow: 0 0 0 #fff;
@@ -470,7 +473,7 @@
   <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
     <div class="menu-overlay__content">
       <div class="menu-overlay__links" role="navigation" aria-label="Primary navigation">
-        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="/#app">Home</a>
         <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">2027</span></a>
         <a class="menu-link" href="about.html">About</a>
         <a class="menu-link" href="mentions.html">Mentions</a>
@@ -479,7 +482,7 @@
     </div>
   </div>
   <canvas id="embers-canvas"></canvas>
-  <header class="ripple"><span><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></span><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>7</span></span></header>
+  <header class="ripple"><h1 aria-label="Resolutions"><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></h1><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>7</span></span></header>
 
   <!-- media -->
   <video id="boatVideo" src="lantern.mp4" autoplay loop muted playsinline webkit-playsinline preload="auto"></video>
@@ -1514,7 +1517,7 @@ if (isWebKit) {
     { offset: 0.75, opacity: 1, transform: 'translate3d(0,0,0) scale(1)', textShadow: '0 0 0 #fff' }
   ];
 
-  const letters = [...header.querySelectorAll(':scope > span:first-child > span')];
+  const letters = [...header.querySelectorAll(':scope > h1 > span')];
   const badgeNumbers = [...header.querySelectorAll('.new-badge span')];
   const allElements = [...letters, ...badgeNumbers];
   const anims = allElements.map((el, i) => {

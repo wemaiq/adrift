@@ -2,8 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://adrift.site/</loc>
-    <lastmod>2025-09-17</lastmod>
-    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://adrift.site/about.html</loc>
+  </url>
+  <url>
+    <loc>https://adrift.site/resolutions.html</loc>
   </url>
   <url>
     <loc>https://adrift.site/mentions.html</loc>
