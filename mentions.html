@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mentions — Adrift</title>
+  <meta name="description" content="Articles, newsletters, and other places where Adrift was featured.">
+  <link rel="canonical" href="https://adrift.site/mentions.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&family=Dongle&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" sizes="16x16" href="favicon-adrift-16x16.svg">
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="favicon-adrift-32x32.svg">
+  <link rel="stylesheet" href="./menu.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #000;
+      color: #ececed;
+      font: 400 16px/1.6 "Figtree", ui-sans-serif, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 18px 22px 80px;
+    }
+
+    .mentions-header {
+      margin-bottom: 44px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff;
+      font: 400 20px/1.6 "Dongle", ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    .mentions-header p {
+      margin: 26px 0 0;
+      color: rgb(255 255 255 / 76%);
+      line-height: 1.8;
+    }
+
+    .mentions-list {
+      max-width: 670px;
+      margin: 0 auto;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid rgb(255 255 255 / 12%);
+    }
+
+    .mentions-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: 8px 24px;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid rgb(255 255 255 / 12%);
+    }
+
+    .publication { font-weight: 600; }
+
+    .article-links {
+      display: grid;
+      justify-items: start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .article-links a {
+      color: rgb(255 255 255 / 76%);
+      text-decoration-color: rgb(255 255 255 / 36%);
+      text-underline-offset: 0.2em;
+      overflow-wrap: anywhere;
+    }
+
+    .article-links a:hover,
+    .article-links a:focus-visible {
+      color: #fff;
+      text-decoration-color: currentColor;
+    }
+
+    .article-links a:focus-visible {
+      outline: 1px solid currentColor;
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+
+    @media (max-width: 640px) {
+      main { padding: 10px 18px 40px; }
+      .mentions-header { margin-bottom: 32px; }
+      .mentions-header p { margin-top: 28px; }
+      .mentions-list li { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open navigation">
+    <span class="menu-toggle__bars">
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+      <span class="menu-toggle__bar"></span>
+    </span>
+  </button>
+  <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+    <div class="menu-overlay__content">
+      <nav class="menu-overlay__links" aria-label="Primary navigation">
+        <a class="menu-link" href="index.html?skipIntro=1#app">Home</a>
+        <a class="menu-link" href="resolutions.html">Resolutions <span class="menu-link__tag">2027</span></a>
+        <a class="menu-link" href="about.html">About</a>
+        <a class="menu-link" href="mentions.html" aria-current="page">Mentions</a>
+      </nav>
+      <div class="menu-overlay__hint">Tap anywhere to close</div>
+    </div>
+  </div>
+
+  <main>
+    <header class="mentions-header">
+      <h1>Mentions</h1>
+      <p>Places where Adrift was featured</p>
+    </header>
+
+    <ul class="mentions-list" role="list">
+      <li>
+        <span class="publication">Krautreporter · Die Morgenpost</span>
+        <div class="article-links">
+          <a href="https://us8.campaign-archive.com/?u=f58c32452c3e437bd66f93688&amp;id=ef8fba7f93">June 2, 2026 issue</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Boing Boing</span>
+        <div class="article-links">
+          <a href="https://boingboing.net/2025/09/23/adrift-is-a-calming-website-where-you-release-anonymous-thoughts-as-paper-boats.html">Adrift is a calming website where you release anonymous thoughts as paper boats</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Flecha · Carmen Pacheco</span>
+        <div class="article-links">
+          <a href="https://flecha.carmenpacheco.es/p/91-la-fragilidad#:~:text=Ruego%20precauci%C3%B3n%20con%20este%20enlace">#91: La fragilidad</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Storythings</span>
+        <div class="article-links">
+          <a href="https://newsletter.storythings.com/p/what-happens-if-no-one-reads-confessions-of-an-agency-receptionist-and-perfect-lives">What Happens If No One Reads?</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Stefan Judis · Web Weekly</span>
+        <div class="article-links">
+          <a href="https://webweekly.email/archive/web-weekly-170/">Web Weekly #170</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Web Curios</span>
+        <div class="article-links">
+          <a href="https://webcurios.co.uk/webcurios-19-09-25/">September 19 roundup</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Das Kraftfuttermischwerk</span>
+        <div class="article-links">
+          <a href="https://www.kraftfuttermischwerk.de/blogg/nachrichten-auf-virtuellen-papierbooten-lesen-oder-schreiben-adrift/">Nachrichten auf virtuellen Papierbooten lesen – oder schreiben: Adrift</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Stéphanie Walter</span>
+        <div class="article-links">
+          <a href="https://stephaniewalter.design/blog/pixels-of-the-week-september-28-2025/">Pixels of the Week</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Peachey Publications</span>
+        <div class="article-links">
+          <a href="https://payhip.com/peacheypublications/blog/news/a-sel-activity-releasing-doubts">A SEL Activity – Releasing doubts</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Website Hunt</span>
+        <div class="article-links">
+          <a href="https://www.websitehunt.co/newsletters/newsletter-2025-09-30/">September 30 newsletter</a>
+          <a href="https://www.websitehunt.co/websites/adrift">Adrift’s directory listing</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Single-Serving Sites</span>
+        <div class="article-links">
+          <a href="https://singleservingsites.cool/#:~:text=Adrift">Adrift’s directory entry</a>
+        </div>
+      </li>
+      <li>
+        <span class="publication">Memo of the Air</span>
+        <div class="article-links">
+          <a href="https://memooftheair.wordpress.com/2025/09/27/there-aint-no-strudel-like-magda-goebbels-strudel/">September 27 link roundup</a>
+        </div>
+      </li>
+    </ul>
+  </main>
+  <script src="./menu.js" defer></script>
+</body>
+</html>
