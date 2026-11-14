@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="./menu.css">
 
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script>
   (() => {
     const params = new URLSearchParams(window.location.search);
@@ -774,7 +774,14 @@ header.ripple span.figtree-adrift {
 /* --- end added --- */
 
 /* === ADDED: loading dots for Enter button === */
-.loading-dots { display:inline-flex; gap:.25em; margin-left:.4em; vertical-align:baseline; }
+#enterBtn { display: inline-grid; place-items: center; }
+#enterBtn > span { grid-area: 1 / 1; }
+#enterBtn .loading-dots { display: none; gap: .25em; }
+#enterBtn[aria-busy="true"] .enter-label { visibility: hidden; }
+#enterBtn[aria-busy="true"] .loading-dots { display: inline-flex; }
+@media (prefers-reduced-motion: reduce) {
+  #enterBtn .loading-dots span { animation: none; opacity: 0.8; }
+}
 .loading-dots span { width:.35em; height:.35em; border-radius:50%; background: currentColor; opacity:.2; animation: dotBlink 1s infinite; }
 .loading-dots span:nth-child(2){ animation-delay:.15s; }
 .loading-dots span:nth-child(3){ animation-delay:.30s; }
@@ -915,7 +922,10 @@ header.ripple span.figtree-adrift {
     <div class="intro-content">
       <div id="doubt-counter" aria-live="polite" data-start-value="0">0 notes released</div>
       <h1 id="intro-text">Adrift is a quiet space where doubt, care, and intention drift together.</h1>
-      <button id="enterBtn" class="cta-btn intro-enter-btn" type="button">Enter</button>
+      <button id="enterBtn" class="cta-btn intro-enter-btn" type="button" aria-label="Enter">
+        <span class="enter-label">Enter</span>
+        <span class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
     </div>
   </div>
 
@@ -940,8 +950,8 @@ header.ripple span.figtree-adrift {
     </aside>
 
     <!-- media -->
-    <video id="boatVideo" src="boat.mp4" loop="" muted="" playsinline="" preload="auto"></video>
-    <audio id="bgAudio" src="sound.mp3" loop="" preload="auto"></audio>
+    <video id="boatVideo" loop="" muted="" playsinline="" preload="auto"></video>
+    <audio id="bgAudio" src="sound.mp3" loop="" preload="none"></audio>
 
     <!-- layers -->
     <canvas id="rain" aria-hidden="true"></canvas>
@@ -1303,6 +1313,11 @@ header.ripple span.figtree-adrift {
     updateBoatVideoSource(normalized);
     updateToggleState();
     reseedBoatsForCurrentView();
+    if (normalized === 'affirmations') {
+      ensureSupportData(400).then(() => {
+        if (currentView === 'affirmations') reseedBoatsForCurrentView();
+      });
+    }
     applyViewState();
   }
 
@@ -1321,8 +1336,10 @@ header.ripple span.figtree-adrift {
   }
 
   function reseedBoatsForCurrentView({ highlight = false } = {}) {
-    if (!boats || !boats.length) return;
     const variant = getCurrentVariant();
+    if (!boats.length) {
+      boats = Array.from({length: BOAT_COUNT}, () => new Boat(variant));
+    }
     const now = performance.now();
 
     boats.forEach((boat) => {
@@ -1334,135 +1351,29 @@ header.ripple span.figtree-adrift {
     });
   }
 
-  /* === ADDED: preload helpers and loading UI === */
-  function preloadVideo(videoEl){
-    return new Promise((resolve) => {
-      if (!videoEl) return resolve();
-      const done = () => resolve();
-      if (videoEl.readyState >= 2) return resolve(); // HAVE_CURRENT_DATA
-      videoEl.addEventListener('canplay', done, { once:true });
-      try {
-        videoEl.load();
-        // muted video can play without gesture; prime a frame then pause
-        videoEl.play().then(()=>{ videoEl.pause(); }).catch(()=>{ /* ignore */ });
-      } catch(_) {}
-    });
-  }
-
-  function preloadAudio(audioEl){
-    return new Promise((resolve) => {
-      if (!audioEl) return resolve();
-      const done = () => resolve();
-      if (audioEl.readyState >= 2) return resolve();
-      audioEl.addEventListener('canplaythrough', done, { once:true });
-      try { audioEl.load(); } catch(_) {}
-      // do not play; just buffer
-    });
-  }
-
-  function preloadFonts(){
-    if (document.fonts && document.fonts.ready) return document.fonts.ready.catch(()=>{});
-    return Promise.resolve();
-  }
-
-  function preloadScriptAlreadyInPage(src){
-    const tag = [...document.scripts].find(s => (s.src||'').includes(src));
-    if (!tag) return Promise.resolve();
-    if (tag.dataset.loaded === '1' || tag.dataset.error === '1') return Promise.resolve();
-    return new Promise((resolve)=> {
-      tag.addEventListener('load', ()=>{ tag.dataset.loaded='1'; resolve(); }, { once:true });
-      tag.addEventListener('error',()=>{ tag.dataset.error='1'; resolve(); }, { once:true });
-    });
-  }
-
-  async function preloadData(){
-    try{
-      // Use existing fetchers so first frame has content
-      const supportPromise = ensureSupportData(400);
-      APPROVED_DOUBTS = await fetchApprovedDoubts(80);
-      if (APPROVED_DOUBTS.length === 0) {
-        APPROVED_DOUBTS = [{ id:'p1', text:'(waiting for first approved doubt…)', date:new Date().toISOString().slice(0,10) }];
-      }
-      initializeDoubtPool();
-      // Seed boats so render is immediate
-      boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
-      await supportPromise;
-      // Warm up counter silently
-      const count = await fetchTotalDoubts().catch(()=>0);
-      if (doubtCounter) {
-        doubtCounter.style.visibility = 'visible';
-        if (count > 0) animateDoubtCounter(doubtCounter, count);
-        else doubtCounter.textContent = '0 notes released';
-      }
-    } catch(err){
-      console.error('Data preload failed:', err);
-      if (!APPROVED_DOUBTS?.length) {
-        APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
-        initializeDoubtPool();
-        boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
-      }
-    }
-  }
-
-  async function preloadAll(){
-    const videoP = preloadVideo(document.getElementById('boatVideo'));
-    const audioP = preloadAudio(document.getElementById('bgAudio'));
-    const fontsP = preloadFonts();
-    const rainP  = preloadScriptAlreadyInPage('rain.js');
-    const dataP  = preloadData();
-
-    // Safety cap (4s) so we don’t hang forever waiting on a stubborn canplaythrough
-    const cap = new Promise(res => setTimeout(res, 4000));
-
-    await Promise.race([
-      Promise.all([videoP, audioP, fontsP, rainP, dataP]),
-      cap
-    ]);
-  }
-
-  function setLoadingUI(isLoading){
-    if (!enterBtn) return;
-    if (isLoading){
-      enterBtn.disabled = true;
-      enterBtn.innerHTML = `Loading<span class="loading-dots"><span></span><span></span><span></span></span>`;
-    } else {
-      enterBtn.disabled = false;
-      enterBtn.textContent = 'Enter';
-    }
-  }
-  /* === end preload helpers === */
-
   let enterStarted = false;
 
-  async function runEnterFlow(){
+  async function runEnterFlow() {
     if (enterStarted) return;
-    if (enterBtn && enterBtn.disabled) return;
     enterStarted = true;
 
-    setLoadingUI(true);
+    enterBtn.disabled = true;
+    enterBtn.setAttribute('aria-busy', 'true');
+    enterBtn.setAttribute('aria-label', 'Entering Adrift');
+
+    const video = boatVideo.play().catch(() => {});
+    const maxWait = mobileLayout.matches ? 700 : 1500;
+    let timer;
+    const deadline = new Promise(resolve => { timer = setTimeout(resolve, maxWait); });
     try {
-      await preloadAll();   // preload video, audio (buffer only), fonts, rain.js (best effort), data + seed boats
+      await Promise.race([Promise.all([video, initialDoubts]), deadline]);
     } finally {
-      setLoadingUI(false);
+      clearTimeout(timer);
+      enterBtn.removeAttribute('aria-busy');
+      enterBtn.setAttribute('aria-label', 'Enter');
+      enterBtn.disabled = false;
+      revealMainContent();
     }
-
-    // Ensure the video is actually playing and mark it ready so boats draw immediately
-    try {
-      boatVideo.muted = true;
-      await boatVideo.play().catch(() => {});
-      if (boatVideo.readyState >= 2) {
-        videoReady = true; // let Boat.draw() run now
-      } else {
-        boatVideo.addEventListener('loadeddata', () => { videoReady = true; }, { once: true });
-      }
-    } catch (_) {}
-
-    // Safety: make sure we have boats before revealing
-    if (!boats || !boats.length) {
-      boats = Array.from({ length: BOAT_COUNT }, () => new Boat(getCurrentVariant()));
-    }
-
-    revealMainContent(); // fade intro only after we've armed drawing
   }
 
   function revealMainContent(immediate = false) {
@@ -1494,9 +1405,6 @@ header.ripple span.figtree-adrift {
   if (shouldSkipIntro) {
     try { sessionStorage.removeItem('skipIntro'); } catch (_) {}
     revealMainContent(true);
-    // Wait for this script's configuration and boat state to initialize before
-    // preloading; return navigation reaches this block before those declarations.
-    queueMicrotask(runEnterFlow);
   }
 
   /* =====================
@@ -1859,18 +1767,26 @@ async function postToWorker(text, token){
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d', { alpha:true });
   const boatVideo = document.getElementById('boatVideo');
+  const mobileLayout = window.matchMedia('(max-width: 640px)');
+  const mediaSuffix = mobileLayout.matches ? '-mobile' : '';
+  const isWebKit = /AppleWebKit/.test(navigator.userAgent) &&
+    !/Chrome|Chromium|Edg/.test(navigator.userAgent);
+  const webKitFrame = isWebKit ? document.createElement('canvas') : null;
+  const webKitFrameContext = webKitFrame?.getContext('2d');
+  const renderPixelRatio = () => Math.min(window.devicePixelRatio || 1, mobileLayout.matches ? 2 : Infinity);
   const BOAT_VIDEO_SOURCES = {
-    doubts: 'boat.mp4',
-    affirmations: 'boat-cheers.mp4'
+    doubts: `boat${mediaSuffix}.mp4`,
+    affirmations: mobileLayout.matches ? 'boat-mobile.mp4' : 'boat-cheers.mp4'
   };
-  let activeBoatVideoSrc = boatVideo?.getAttribute('src') || BOAT_VIDEO_SOURCES.doubts;
+  let activeBoatVideoSrc = BOAT_VIDEO_SOURCES.doubts;
+  boatVideo.src = activeBoatVideoSrc;
   const bgAudio = document.getElementById('bgAudio');
   const soundToggle = document.getElementById('soundToggle');
   const releaseBtn = document.getElementById('releaseBtn');
 
   let W, H;
   function resize() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = renderPixelRatio();
     W = innerWidth;  // Keep W and H as CSS pixels
     H = innerHeight;
     canvas.width = W * dpr;
@@ -2373,48 +2289,23 @@ addEventListener('pageshow', (event) => {
         ctx.filter = this.variant === 'cheer' ? 'hue-rotate(68deg)' : 'none';
       }
 
-      const ua = navigator.userAgent;
+      const previousComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'screen';
 
-const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+      if (webKitFrameContext) {
+        const dpr = renderPixelRatio();
+        const width = Math.max(1, Math.floor(displayW * dpr));
+        const height = Math.max(1, Math.floor(displayH * dpr));
+        if (webKitFrame.width < width) webKitFrame.width = width;
+        if (webKitFrame.height < height) webKitFrame.height = height;
+        webKitFrameContext.clearRect(0, 0, width, height);
+        webKitFrameContext.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, width, height);
+        ctx.drawImage(webKitFrame, 0, 0, width, height, -displayW / 2, -displayH / 2, displayW, displayH);
+      } else {
+        ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW / 2, -displayH / 2, displayW, displayH);
+      }
 
-
-
-if (isWebKit) {
-
-  const dpr = window.devicePixelRatio || 1;
-
-  const offCanvas = document.createElement('canvas');
-
-  offCanvas.width  = displayW * dpr;
-
-  offCanvas.height = displayH * dpr;
-
-  const offCtx = offCanvas.getContext('2d');
-
-  offCtx.scale(dpr, dpr);
-
-  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-
-
-
-  ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
-
-ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
-
-  ctx.globalCompositeOperation = 'source-over';
-
-} else {
-
-  const prev = ctx.globalCompositeOperation;
-
-  ctx.globalCompositeOperation = 'screen';
-
-  ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW/2, -displayH/2, displayW, displayH);
-
-  ctx.globalCompositeOperation = prev;
-
-}
-
+      ctx.globalCompositeOperation = previousComposite;
 
       if (supportsFilter) {
         ctx.filter = prevFilter;
@@ -2760,7 +2651,10 @@ closeNote();
   }
 
   /* Loop */
-  function animate(now=0){ 
+  function animate(now=0){
+    requestAnimationFrame(animate);
+    if (!mainContent.classList.contains('visible')) return;
+
     ctx.clearRect(0,0,W,H); 
 
     // Update all first
@@ -2774,10 +2668,8 @@ closeNote();
       b.draw(now);
     }
 
-    requestAnimationFrame(animate); 
   }
-  
-  // Start animation immediately, don't wait for intro
+
   animate();
 
   /* Interactions */
@@ -2815,8 +2707,7 @@ closeNote();
  /* =========
      Boot flow
      ========= */
-  (async function init(){
-    const supportPromise = ensureSupportData(400);
+  const initialDoubts = (async function initDoubts() {
     try{
       APPROVED_DOUBTS = await fetchApprovedDoubts(80);
       if (APPROVED_DOUBTS.length === 0) {
@@ -2833,12 +2724,16 @@ closeNote();
       APPROVED_DOUBTS = [{ id:'p1', text:'(temporarily unable to load doubts)', date:new Date().toISOString().slice(0,10) }];
       initializeDoubtPool();
     } finally {
-      await supportPromise.catch(() => {});
-      // Seed boats only after we have something to show
-      boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
+      if (currentView === 'doubts') {
+        boats = Array.from({length: BOAT_COUNT}, () => new Boat(getCurrentVariant()));
+      }
     }
 
-// Update counter on load
+  })();
+
+  initialDoubts.then(() => ensureSupportData(400));
+
+  // Update the intro counter independently of note and media loading.
 fetchTotalDoubts().then(count => {
   if (!doubtCounter) return;
   doubtCounter.style.visibility = 'visible';
@@ -2850,7 +2745,6 @@ fetchTotalDoubts().then(count => {
 }).catch(() => {
   if (doubtCounter) doubtCounter.style.visibility = 'hidden';
 });
-})();
 </script>
 
 

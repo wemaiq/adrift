@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Dongle&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./menu.css">
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- SEO + AEO Metadata -->
 <title>Share New Year’s Resolutions Anonymously — Adrift</title>
@@ -485,8 +485,8 @@
   <header class="ripple"><h1 aria-label="Resolutions"><span>r</span><span>e</span><span>s</span><span>o</span><span>l</span><span>u</span><span>t</span><span>i</span><span>o</span><span>n</span><span>s</span></h1><span class="new-badge"><span>2</span> <span>0</span> <span>2</span> <span>7</span></span></header>
 
   <!-- media -->
-  <video id="boatVideo" src="lantern.mp4" autoplay loop muted playsinline webkit-playsinline preload="auto"></video>
-  <audio id="bgAudio" src="starlight.mp3" loop="" preload="auto"></audio>
+  <video id="boatVideo" autoplay loop muted playsinline webkit-playsinline preload="auto"></video>
+  <audio id="bgAudio" src="starlight.mp3" loop="" preload="none"></audio>
 
   <!-- layers -->
   <canvas id="rain" aria-hidden="true"></canvas>
@@ -578,6 +578,14 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d', { alpha:true });
   const boatVideo = document.getElementById('boatVideo');
+  const mobileLayout = window.matchMedia('(max-width: 640px)');
+  const mediaSuffix = mobileLayout.matches ? '-mobile' : '';
+  const isWebKit = /AppleWebKit/.test(navigator.userAgent) &&
+    !/Chrome|Chromium|Edg/.test(navigator.userAgent);
+  const webKitFrame = isWebKit ? document.createElement('canvas') : null;
+  const webKitFrameContext = webKitFrame?.getContext('2d');
+  const renderPixelRatio = () => Math.min(window.devicePixelRatio || 1, mobileLayout.matches ? 2 : Infinity);
+  boatVideo.src = `lantern${mediaSuffix}.mp4`;
   const bgAudio = document.getElementById('bgAudio');
   const soundToggle = document.getElementById('soundToggle');
   const releaseBtn = document.getElementById('releaseBtn');
@@ -585,7 +593,7 @@
 
   let W, H;
   function resize() {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = renderPixelRatio();
   W = innerWidth;
   H = innerHeight;
 
@@ -1100,48 +1108,23 @@ ctx.globalAlpha = a * fadeIn;
         ctx.filter = 'none';
       }
 
-      const ua = navigator.userAgent;
+      const previousComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'screen';
 
-const isWebKit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+      if (webKitFrameContext) {
+        const dpr = renderPixelRatio();
+        const width = Math.max(1, Math.floor(displayW * dpr));
+        const height = Math.max(1, Math.floor(displayH * dpr));
+        if (webKitFrame.width < width) webKitFrame.width = width;
+        if (webKitFrame.height < height) webKitFrame.height = height;
+        webKitFrameContext.clearRect(0, 0, width, height);
+        webKitFrameContext.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, width, height);
+        ctx.drawImage(webKitFrame, 0, 0, width, height, -displayW / 2, -displayH / 2, displayW, displayH);
+      } else {
+        ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW / 2, -displayH / 2, displayW, displayH);
+      }
 
-
-
-if (isWebKit) {
-
-  const dpr = window.devicePixelRatio || 1;
-
-  const offCanvas = document.createElement('canvas');
-
-  offCanvas.width  = displayW * dpr;
-
-  offCanvas.height = displayH * dpr;
-
-  const offCtx = offCanvas.getContext('2d');
-
-  offCtx.scale(dpr, dpr);
-
-  offCtx.drawImage(boatVideo, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
-
-
-
-  ctx.globalCompositeOperation = 'screen'; // fallback: try 'lighter' if needed
-
- ctx.drawImage(offCanvas, -displayW/2, -displayH/2, displayW, displayH);
-
-
-  ctx.globalCompositeOperation = 'source-over';
-
-} else {
-
-  const prev = ctx.globalCompositeOperation;
-
-  ctx.globalCompositeOperation = 'screen';
-
-  ctx.drawImage(boatVideo, srcX, srcY, srcW, srcH, -displayW/2, -displayH/2, displayW, displayH);
-
-  ctx.globalCompositeOperation = prev;
-
-}
+      ctx.globalCompositeOperation = previousComposite;
 
       if (supportsFilter) {
         ctx.filter = prevFilter;
